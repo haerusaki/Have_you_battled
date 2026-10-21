@@ -1,0 +1,2579 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+<title>Batalla contra el jefe</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Anime-style boss battle game for 5th grade English: Have you ever…?, past participles, shows and music genres. Reading, listening and writing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap">
+<style>
+/* Layout: one-screen app — battle arena panel + manga-panel question card,
+   stacked on phones, side by side on wide screens. Deliberate single dark look. */
+:root{
+  --night:#140F36; --night-2:#211A55; --night-3:#2E2470;
+  --ink:#15112C; --ink-2:#4A4668;
+  --paper:#FCFCFF; --paper-2:#EEF0FF; --paper-line:#C9CCEB;
+  --sakura:#FF4F96; --sakura-2:#FF8FC0; --volt:#FFC93C; --sky:#2EE6FF;
+  --good:#0A7F4F; --good-bg:#DDF7EA; --bad:#C4102D; --bad-bg:#FFE3E8;
+  --hp:#FF3355; --on-dark:#FFFFFF; --on-dark-2:#CFCBF2;
+  --display:"Dela Gothic One","Arial Black","Impact",sans-serif;
+  --body:"M PLUS Rounded 1c","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --r:18px;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{height:100%;box-sizing:border-box;-webkit-text-size-adjust:100%}
+body{
+  height:100%;margin:0;overflow:hidden;
+  background:var(--night);color:var(--on-dark);
+  font:500 18px/1.45 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:8px;
+  -webkit-tap-highlight-color:transparent;
+}
+button{font:inherit;color:inherit}
+:focus-visible{outline:4px solid var(--sakura);outline-offset:3px}
+.ico{width:1.2em;height:1.2em;flex:none;vertical-align:-.2em}
+.mark{width:1.25em;height:1.25em;vertical-align:-.25em;margin-right:.2em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+#app{position:relative;height:100%;max-width:1400px;margin:0 auto}
+.screen{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  min-height:64px;padding:12px 24px;border-radius:16px;
+  border:3px solid #000;background:var(--paper);color:var(--ink);
+  font:800 1.15rem/1.2 var(--body);letter-spacing:.01em;
+  box-shadow:0 5px 0 #000;cursor:pointer;text-align:center;
+  transition:transform .08s ease, box-shadow .08s ease, background .15s;
+}
+.btn:hover{background:#fff}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.btn.primary{background:var(--volt);color:var(--ink)}
+.btn.primary:hover{background:#FFD65E}
+.btn.hot{background:var(--sakura);color:#fff;text-shadow:0 1px 0 #000}
+.btn.ghost{background:transparent;color:var(--on-dark);border-color:var(--on-dark-2);box-shadow:none}
+.btn.ghost:hover{background:rgba(255,255,255,.08)}
+.btn.small{min-height:48px;padding:8px 16px;font-size:1rem}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:0 5px 0 #000}
+.icon-btn{
+  width:56px;height:56px;border-radius:50%;border:3px solid #000;background:var(--paper);color:var(--ink);
+  display:grid;place-items:center;box-shadow:0 4px 0 #000;cursor:pointer;flex:none
+}
+.icon-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.icon-btn .ico{width:26px;height:26px}
+
+/* ---------- Shared decorative ---------- */
+.burst-bg{
+  position:absolute;inset:-40%;
+  background:repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,255,255,.07) 0 5deg, transparent 5deg 13deg);
+  animation:spin 80s linear infinite;pointer-events:none
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.kana{font-family:var(--display);color:var(--sakura);letter-spacing:.2em;font-size:.95rem}
+.eyebrow{font:800 .8rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--sky)}
+.display{font-family:var(--display);font-weight:400;letter-spacing:.02em;line-height:1.05;text-wrap:balance}
+.outline-text{
+  color:var(--volt);
+  text-shadow:3px 3px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,0 3px 0 #000,6px 6px 0 var(--sakura);
+}
+
+/* ---------- Title ---------- */
+.title-wrap{
+  min-height:100%;display:grid;gap:20px;align-content:center;
+  grid-template-columns:minmax(0,1fr);padding-block:12px 24px
+}
+.title-art{
+  position:relative;overflow:hidden;border-radius:24px;border:3px solid #000;
+  background:radial-gradient(120% 90% at 50% 10%, #4A2FA8 0%, #241A64 55%, #140F36 100%);
+  aspect-ratio:16/10;max-width:100%;
+}
+.title-art .dragon-bg{position:absolute;right:-6%;top:-6%;width:62%;opacity:.95;--d1:#E0314B;--d1s:#9C1530;--d1l:#FF8C9A;--d2:#FFC93C;--d3:#5CF2FF}
+.title-art .dragon-bg svg{width:100%;height:auto;display:block}
+.title-art .lineup{position:absolute;left:2%;right:2%;bottom:-4%;display:flex;justify-content:center;align-items:flex-end}
+.title-art .lineup .hero-svg{width:26%;height:auto;margin:0 -2.5%;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+.title-art .lineup .hero-svg:nth-child(2),.title-art .lineup .hero-svg:nth-child(3){width:29%}
+.title-art .logo{position:absolute;left:5%;top:7%;max-width:60%}
+.title-art h1{margin:4px 0 0;font-size:clamp(2.4rem,9vw,5.4rem)}
+.title-side{display:grid;gap:16px;align-content:center}
+.tagline{display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none}
+.tagline li{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:4px 14px;font-weight:700;font-size:.95rem}
+.howbox{background:var(--paper);color:var(--ink);border:3px solid #000;border-radius:var(--r);padding:16px 18px;box-shadow:6px 6px 0 #000}
+.howbox h2{margin:0 0 10px;font:400 1.2rem/1.1 var(--display)}
+.howbox ul{margin:0;padding:0;list-style:none;display:grid;gap:10px}
+.howbox li{display:flex;gap:12px;align-items:flex-start;font-weight:700;line-height:1.35}
+.howbox li .ico{width:28px;height:28px;margin-top:-2px}
+.howbox .c-good{color:var(--good)}.howbox .c-bad{color:var(--bad)}.howbox .c-star{color:#B07800}
+.menu{display:grid;gap:12px}
+.menu .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.menu .btn.primary{font-size:1.35rem;min-height:72px}
+.best{margin:0;color:var(--on-dark-2);font-weight:700}
+.title-top{position:absolute;right:12px;top:12px;z-index:2}
+@media (min-width:900px){
+  .title-wrap{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:28px;align-items:center}
+  .title-art{aspect-ratio:auto;height:min(78vh,640px)}
+}
+
+/* ---------- Generic page (hero select, how-to, guide, select, report) ---------- */
+.page{max-width:1080px;margin:0 auto;padding-block:12px 40px;display:grid;gap:18px}
+.page > *{min-width:0}
+.page,.title-side{padding-right:8px}
+.page-head{display:flex;align-items:center;gap:14px}
+.page-head h1{margin:0;font-size:clamp(1.6rem,5vw,2.4rem)}
+.panel{background:var(--paper);color:var(--ink);border:3px solid #000;border-radius:var(--r);padding:18px;box-shadow:6px 6px 0 #000}
+.panel h2{margin:0 0 8px;font:400 1.25rem/1.15 var(--display)}
+.panel p{margin:0 0 8px}
+
+/* Hero select */
+.hero-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (min-width:760px){.hero-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.hero-card{
+  position:relative;display:grid;justify-items:center;gap:4px;padding:12px 10px 14px;
+  background:linear-gradient(180deg,var(--night-3),var(--night-2));color:var(--on-dark);
+  border:3px solid #000;border-radius:var(--r);box-shadow:0 5px 0 #000;cursor:pointer;
+}
+.hero-card .hero-svg{width:100%;max-width:170px;height:auto}
+.hero-card b{font:400 1.25rem/1 var(--display)}
+.hero-card small{color:var(--on-dark-2);font-weight:700}
+.hero-card[aria-pressed="true"]{background:linear-gradient(180deg,#5B3BD1,#2E2470);outline:4px solid var(--volt);outline-offset:2px}
+.hero-card[aria-pressed="true"]::after{content:"";position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:var(--volt) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9.5 16.2 5.3 12l-1.8 1.8 6 6 11-11-1.8-1.8-9.2 9.2Z' fill='%2315112C'/%3E%3C/svg%3E") center/20px no-repeat;border:2px solid #000}
+.name-row{display:grid;gap:8px}
+.name-row label{font-weight:800}
+.text-in{
+  width:100%;min-height:60px;padding:10px 16px;border:3px solid #000;border-radius:14px;
+  background:#fff;color:var(--ink);font:700 1.25rem var(--body);color-scheme:light
+}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.actions .btn{flex:1 1 220px}
+
+/* Level select */
+.lvl-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.lvl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lvl-card{
+  display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px;align-items:center;text-align:left;
+  padding:14px;border:3px solid #000;border-radius:var(--r);background:var(--paper);color:var(--ink);box-shadow:0 5px 0 #000;cursor:pointer
+}
+.lvl-card:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.lvl-card .thumb{width:110px;height:110px;border-radius:14px;background:var(--night-2);display:grid;place-items:center;overflow:hidden;--d1:#E0314B;--d1s:#9C1530;--d1l:#FF8C9A;--d2:#FFC93C;--d3:#5CF2FF}
+.lvl-card .thumb svg{width:100%;height:100%}
+.lvl-card .num{font:800 .8rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.lvl-card b{display:block;font:400 1.3rem/1.1 var(--display);margin:4px 0}
+.lvl-card span{display:block;font-weight:700;line-height:1.3}
+.lvl-card .energy{margin-top:6px;font-weight:800;color:var(--bad);font-variant-numeric:tabular-nums}
+
+/* How-to */
+.steps{display:grid;gap:14px;grid-template-columns:minmax(0,1fr);counter-reset:s}
+@media (min-width:760px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.step{display:grid;grid-template-columns:64px minmax(0,1fr);gap:14px;align-items:start}
+.step .badge{width:64px;height:64px;border-radius:16px;border:3px solid #000;display:grid;place-items:center;background:var(--volt);color:var(--ink)}
+.step .badge .ico{width:34px;height:34px}
+.step h3{margin:2px 0 4px;font:800 1.2rem/1.2 var(--body)}
+.step p{margin:0 0 4px}
+.es{color:var(--ink-2);font-size:.95rem;font-style:italic}
+.chipset{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+
+/* Guide (teacher) */
+.guide{line-height:1.55}
+.guide h2{font:400 1.35rem/1.2 var(--display);margin:4px 0 10px}
+.guide h3{margin:16px 0 6px;font:800 1.1rem var(--body)}
+.guide p,.guide li{max-width:72ch}
+.guide ul,.guide ol{padding-left:1.3em;margin:6px 0 10px}
+.guide li{margin:4px 0}
+.tbl-wrap{overflow-x:auto;margin:8px 0 12px;border:2px solid var(--ink);border-radius:12px}
+.guide table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+.guide th,.guide td{padding:8px 10px;border-bottom:1px solid var(--paper-line);text-align:left;vertical-align:top}
+.guide th{background:var(--paper-2);font-weight:800}
+.guide tr:last-child td{border-bottom:0}
+.guide code,.guide .ex{font-family:var(--body);font-weight:800;background:var(--paper-2);padding:1px 6px;border-radius:6px}
+.guide .err{color:var(--bad);text-decoration:line-through;text-decoration-thickness:2px}
+.toc{display:flex;flex-wrap:wrap;gap:8px}
+.toc a{color:var(--ink);font-weight:800;background:var(--paper-2);border:2px solid var(--ink);border-radius:999px;padding:4px 12px;text-decoration:none}
+
+/* ---------- Battle ---------- */
+.battle{display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:10px;height:100%;overflow:hidden}
+.hud{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:10px 12px}
+.hud-portrait{width:52px;height:52px;border-radius:50%;border:3px solid #000;background:var(--night-3);overflow:hidden;flex:none}
+.hud-portrait svg{width:100%;height:100%}
+.hud-id{min-width:0}
+.hud-name{font-weight:800;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--on-dark-2)}
+.hearts{display:flex;gap:4px;color:var(--hp)}
+.hearts .ico{width:28px;height:28px;filter:drop-shadow(0 2px 0 #000)}
+.hearts .lost{color:#5A557F}
+.hearts .pop{animation:heartPop .6s ease}
+@keyframes heartPop{30%{transform:scale(1.5)}100%{transform:scale(1)}}
+.train-tag{font-weight:800;color:var(--sky);font-size:.95rem}
+.hud-score{text-align:right;line-height:1.05}
+.hud-score small{display:block;font:800 .72rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-2)}
+.hud-score b{font:400 1.5rem/1.1 var(--display);color:var(--volt);font-variant-numeric:tabular-nums}
+.journey{grid-column:1/-1;display:flex;align-items:center;gap:10px}
+.journey small{font:800 .72rem/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:var(--on-dark-2)}
+.jtrack{position:relative;flex:1;height:14px;margin-right:14px;border-radius:999px;background:#0B0826;border:2px solid #000}
+.jfill{position:absolute;inset:0 auto 0 0;width:0;border-radius:999px;background:linear-gradient(90deg,var(--sky),var(--sakura),var(--volt));transition:width .6s ease}
+.jnode{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;border:2px solid #000;background:#2B245E;display:grid;place-items:center;font:800 .75rem/1 var(--body);color:var(--on-dark)}
+.jnode.done{background:var(--volt);color:var(--ink)}
+.jnode.now{background:var(--sakura);color:#fff;box-shadow:0 0 0 3px rgba(255,79,150,.35)}
+
+.arena{
+  position:relative;overflow:hidden;border-radius:22px;border:3px solid #000;
+  height:clamp(200px,33vh,330px);isolation:isolate;
+  background:var(--arena,linear-gradient(180deg,#1A1446,#3B1F7A 60%,#0C6B8F))
+}
+.arena[data-scene="city"]{--arena:linear-gradient(180deg,#120D3A 0%,#3A1F86 55%,#1D5F9A 100%)}
+.arena[data-scene="sunset"]{--arena:linear-gradient(180deg,#5B2A86 0%,#E5487A 50%,#FF9A45 100%)}
+.arena[data-scene="circus"]{--arena:linear-gradient(180deg,#0E3A4C 0%,#1F5D6E 50%,#5A1A3C 100%)}
+.arena[data-scene="stage"]{--arena:radial-gradient(90% 80% at 50% 30%,#6A0F2A 0%,#2A0712 60%,#0D0206 100%)}
+.arena[data-scene="dojo"]{--arena:linear-gradient(180deg,#1C2348 0%,#2E3B6E 60%,#3A4A3A 100%)}
+.arena .burst-bg{opacity:.9;inset:-60%}
+.arena .scene{position:absolute;left:0;right:0;bottom:0;height:72%;z-index:0;pointer-events:none}
+.scene-svg{width:100%;height:100%;display:block}
+.eq{transform-box:fill-box;transform-origin:bottom;animation:eq 1.1s ease-in-out infinite alternate}
+@keyframes eq{to{transform:scaleY(.4)}}
+.petals{position:absolute;inset:0;pointer-events:none;z-index:1}
+.petals i{position:absolute;top:-20px;width:12px;height:9px;border-radius:12px 0 12px 0;background:#FFB7D5;opacity:.85;animation:fall linear infinite}
+@keyframes fall{to{transform:translate(-60px,420px) rotate(540deg)}}
+.eplate{position:absolute;left:12px;right:12px;top:10px;z-index:3;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:end}
+.ename{font:400 clamp(1rem,2.6vw,1.35rem)/1.1 var(--display);text-shadow:2px 2px 0 #000,-1px -1px 0 #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ephase{font:800 .78rem/1 var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--volt);text-shadow:1px 1px 0 #000;text-align:right}
+.hpbar{grid-column:1/-1;position:relative;height:20px;border-radius:999px;background:#0B0826;border:3px solid #000;overflow:hidden}
+.hpfill{position:absolute;inset:0 auto 0 0;background:linear-gradient(180deg,#FF6B85,#E01E45);transition:width .5s cubic-bezier(.3,1.4,.5,1)}
+.hpfill.mid{background:linear-gradient(180deg,#FFD65E,#F2A51A)}
+.hpfill.low{background:linear-gradient(180deg,#FF9AA8,#FF3355);animation:blink .6s steps(2) infinite}
+@keyframes blink{50%{filter:brightness(1.5)}}
+.hptext{position:absolute;inset:0;display:grid;place-items:center;font:800 .78rem/1 var(--body);color:#fff;text-shadow:1px 1px 0 #000,-1px -1px 0 #000;font-variant-numeric:tabular-nums;letter-spacing:.04em}
+.enemy{position:absolute;right:5%;bottom:3%;height:76%;aspect-ratio:220/230;z-index:2;max-width:60%}
+.enemy svg{width:100%;height:100%;display:block;overflow:visible}
+.enemy .bob{animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.enemy .screen{animation:flick 3s steps(1) infinite}
+@keyframes flick{0%,92%,100%{opacity:1}94%{opacity:.4}96%{opacity:1}97%{opacity:.6}}
+.enemy .tails{transform-origin:110px 182px;animation:sway 3s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(4deg)}}
+.enemy .notes,.enemy .sparks,.enemy .juggle{animation:bob 1.8s ease-in-out infinite}
+.enemy .j2{animation:bob 1.4s ease-in-out infinite reverse}
+.enemy .halo{transform-origin:120px 108px;animation:spin 24s linear infinite}
+.enemy .whisk,.enemy .whisk2{animation:bob 2s ease-in-out infinite}
+.enemy.dragon{aspect-ratio:1;--d1:#E0314B;--d1s:#9C1530;--d1l:#FF8C9A;--d2:#FFC93C;--d3:#5CF2FF}
+.arena[data-phase="1"] .enemy.dragon{--d1:#7B45E8;--d1s:#4C25A6;--d1l:#B596FF;--d2:#FF6FB0;--d3:#FFE14D}
+.arena[data-phase="2"] .enemy.dragon{--d1:#F2A51A;--d1s:#A86A00;--d1l:#FFE08A;--d2:#2EE6FF;--d3:#FF3355;filter:drop-shadow(0 0 14px rgba(255,201,60,.8))}
+.enemy.hit{animation:hit .45s ease}
+@keyframes hit{0%{filter:brightness(3) saturate(0)}20%{transform:translateX(10px)}40%{transform:translateX(-8px);filter:brightness(1.6)}60%{transform:translateX(5px)}100%{transform:none;filter:none}}
+.enemy.attack{animation:attack .5s ease}
+@keyframes attack{40%{transform:translateX(-22%) scale(1.12)}100%{transform:none}}
+.enemy.defeated{animation:poof .9s ease forwards}
+@keyframes poof{30%{filter:brightness(3) saturate(0)}100%{transform:scale(.2) rotate(-20deg);opacity:0}}
+.hero-sprite{position:absolute;left:3%;bottom:-2%;height:56%;aspect-ratio:120/150;z-index:2}
+.hero-sprite svg{width:100%;height:100%;display:block}
+.hero-sprite .scarf-tail{transform-origin:76px 104px;animation:flutter .9s ease-in-out infinite alternate}
+@keyframes flutter{to{transform:rotate(-8deg) scaleX(1.06)}}
+.hero-sprite.lunge{animation:lunge .45s ease}
+@keyframes lunge{40%{transform:translateX(26%) translateY(-6%)}100%{transform:none}}
+.hero-sprite.hurt{animation:hurt .5s ease}
+@keyframes hurt{20%{transform:translateX(-10px) rotate(-6deg);filter:brightness(1.5) sepia(1) hue-rotate(-50deg) saturate(4)}50%{transform:translateX(6px)}100%{transform:none;filter:none}}
+.hero-sprite.hop{animation:hop .5s ease}
+@keyframes hop{40%{transform:translateY(-18%)}100%{transform:none}}
+.fx{position:absolute;inset:0;z-index:4;pointer-events:none}
+.blast{position:absolute;left:18%;top:62%;width:40px;height:40px;margin:-20px;border-radius:50%;
+  background:radial-gradient(circle,#fff 0 25%,var(--c,#FFC93C) 45%,transparent 70%);
+  animation:blast .42s ease-in forwards}
+.blast.special{width:80px;height:80px;margin:-40px;animation-duration:.5s}
+@keyframes blast{to{left:74%;top:46%;transform:scale(1.6)}}
+.dmg{position:absolute;left:66%;top:34%;font:400 clamp(1.6rem,4vw,2.4rem)/1 var(--display);color:#fff;
+  text-shadow:3px 3px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000;animation:dmg 1s ease-out forwards}
+@keyframes dmg{0%{transform:translateY(10px) scale(.6);opacity:0}20%{transform:translateY(0) scale(1.2);opacity:1}100%{transform:translateY(-40px) scale(1);opacity:0}}
+.pow{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) rotate(-8deg);padding:10px 22px;
+  font:400 clamp(1.3rem,4vw,2rem)/1 var(--display);color:var(--ink);background:var(--volt);border:3px solid #000;
+  clip-path:polygon(0 18%,8% 0,30% 12%,50% 0,70% 12%,92% 0,100% 18%,94% 50%,100% 82%,92% 100%,70% 88%,50% 100%,30% 88%,8% 100%,0 82%,6% 50%);
+  animation:pow .9s ease forwards;white-space:nowrap}
+.pow.special{background:var(--sakura);color:#fff;text-shadow:2px 2px 0 #000;font-size:clamp(1.5rem,5vw,2.4rem)}
+.pow.heal{background:var(--sky)}
+@keyframes pow{0%{transform:translate(-50%,-50%) scale(.3) rotate(-8deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.1) rotate(-8deg);opacity:1}80%{opacity:1}100%{transform:translate(-50%,-50%) scale(1) rotate(-8deg);opacity:0}}
+.speedlines{position:absolute;inset:-30%;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,255,255,.55) 0 1.5deg,transparent 1.5deg 9deg);
+  -webkit-mask:radial-gradient(circle,transparent 22%,#000 60%);mask:radial-gradient(circle,transparent 22%,#000 60%);animation:speed .6s ease forwards}
+@keyframes speed{0%{opacity:0}20%{opacity:1}100%{opacity:0;transform:scale(1.2)}}
+.arena.hurt::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none;box-shadow:inset 0 0 60px 20px rgba(255,30,60,.75);animation:hurtFlash .55s ease forwards}
+@keyframes hurtFlash{to{opacity:0}}
+
+/* Question card */
+.card-col{min-height:0;overflow-y:auto;overflow-x:hidden;padding:2px 8px 14px 2px;scrollbar-width:thin}
+.qcard{
+  position:relative;background:var(--paper);color:var(--ink);border:3px solid #000;border-radius:var(--r);
+  padding:16px 16px 18px;box-shadow:6px 6px 0 #000;display:grid;gap:14px
+}
+.qcard::before{content:"";position:absolute;right:0;top:0;width:120px;height:80px;border-top-right-radius:15px;pointer-events:none;
+  background-image:radial-gradient(rgba(21,17,44,.16) 1.3px,transparent 1.6px);background-size:8px 8px;
+  -webkit-mask:linear-gradient(225deg,#000 10%,transparent 70%);mask:linear-gradient(225deg,#000 10%,transparent 70%)}
+.qmeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:2px solid #000;border-radius:999px;font:800 .82rem/1 var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.chip.r{background:var(--volt)}.chip.l{background:var(--sky)}.chip.w{background:var(--sakura-2)}
+.chip.topic{background:var(--paper-2);text-transform:none;letter-spacing:0;font-weight:700}
+.qcount{margin-left:auto;font-weight:800;color:var(--ink-2);font-size:.9rem;font-variant-numeric:tabular-nums}
+.streak{display:inline-flex;align-items:center;gap:4px;font-weight:800;font-size:.9rem;color:#B04A00}
+.streak .ico{color:#FF7A2E}
+.passage{background:var(--paper-2);border:2px solid var(--ink);border-radius:14px;padding:12px 14px;font-size:1.12rem;line-height:1.6;font-weight:600}
+.passage .mark{width:1.15em;height:1.15em}
+.qprompt{margin:0;font:800 clamp(1.2rem,1.05rem + .7vw,1.5rem)/1.3 var(--body);text-wrap:balance}
+.qwho{margin:0;font-weight:700;color:var(--ink-2)}
+.qsentence{font:800 clamp(1.25rem,1.1rem + .8vw,1.6rem)/1.45 var(--body);background:var(--paper-2);border:2px dashed var(--ink-2);border-radius:14px;padding:12px 14px}
+.qsentence .gap{display:inline-block;min-width:3.2em;border-bottom:3px solid var(--ink);margin:0 .1em;transform:translateY(-.15em)}
+.listen-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.listen-row .btn{flex:1 1 130px}
+.btn.listen{background:var(--sky)}
+.btn.listen.playing{background:#9BF4FF}
+.btn.listen .ico{width:26px;height:26px}
+.linkish{background:none;border:0;padding:6px 2px;color:var(--ink);font-weight:800;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:.98rem}
+.transcript{background:#FFF7D6;border:2px solid var(--ink);border-radius:12px;padding:10px 12px;font-weight:700}
+.nosound{font-weight:700;color:var(--bad)}
+
+.opts{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.opts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.opt{
+  display:flex;align-items:center;gap:12px;min-height:64px;width:100%;padding:10px 14px;
+  border:3px solid #000;border-radius:14px;background:#fff;color:var(--ink);
+  font:800 1.12rem/1.3 var(--body);text-align:left;box-shadow:0 4px 0 #000;cursor:pointer;
+  transition:transform .08s ease, box-shadow .08s ease, background .15s
+}
+.opt:hover:not([disabled]){background:#FFF6D6}
+.opt:active:not([disabled]){transform:translateY(3px);box-shadow:0 1px 0 #000}
+.opt .k{flex:none;width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:800 .95rem/1 var(--body)}
+.opt .t{min-width:0;overflow-wrap:anywhere}
+.opt[disabled]{cursor:default}
+.opt.dim{opacity:.5}
+.opt.ok{background:var(--good);color:#fff;opacity:1;transition:none}
+.opt.ok .k{background:#fff;color:var(--good)}
+.opt.no{background:var(--bad);color:#fff;opacity:1;transition:none}
+.opt.no .k{background:#fff;color:var(--bad)}
+.opts.tf .opt{justify-content:center;font-size:1.3rem}
+.opts.tf .opt .t{font-weight:800}
+
+.type-row{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.type-row.short{grid-template-columns:minmax(0,1fr) auto}
+.ans-input{
+  width:100%;min-height:64px;padding:10px 16px;border:3px solid #000;border-radius:14px;
+  background:#fff;color:var(--ink);font:800 1.35rem var(--body);color-scheme:light
+}
+.ans-input::placeholder{color:#8C89A6;font-weight:600}
+.ans-input.ok{border-color:var(--good);background:var(--good-bg)}
+.ans-input.no{border-color:var(--bad);background:var(--bad-bg)}
+.btn.attack{background:var(--sakura);color:#fff;text-shadow:0 1px 0 #000}
+.btn.attack .ico{width:24px;height:24px}
+
+.buildline{min-height:76px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;padding:10px;border:3px dashed var(--ink-2);border-radius:14px;background:var(--paper-2)}
+.buildline .hint{color:var(--ink-2);font-weight:700;align-self:center}
+.buildline .punct{align-self:center;font:800 1.3rem var(--body)}
+.tiles{display:flex;flex-wrap:wrap;gap:10px}
+.tile{min-height:56px;padding:8px 16px;border:3px solid #000;border-radius:12px;background:#fff;color:var(--ink);font:800 1.15rem var(--body);box-shadow:0 4px 0 #000;cursor:pointer}
+.tile:active{transform:translateY(3px);box-shadow:0 1px 0 #000}
+.tile.used{visibility:hidden}
+.tile.placed{background:#FFF3C4}
+.build-actions{display:flex;flex-wrap:wrap;gap:10px}
+.build-actions .btn{flex:1 1 160px}
+.buildline.ok{border-style:solid;border-color:var(--good);background:var(--good-bg)}
+.buildline.no{border-style:solid;border-color:var(--bad);background:var(--bad-bg)}
+
+.fb{border:3px solid #000;border-radius:16px;overflow:hidden;background:#fff;animation:fbIn .25s ease}
+@keyframes fbIn{from{transform:translateY(8px);opacity:0}}
+.fb-head{display:flex;align-items:center;gap:10px;padding:10px 14px;font:400 1.15rem/1.15 var(--display);color:#fff}
+.fb.ok .fb-head{background:var(--good)}
+.fb.no .fb-head{background:var(--bad)}
+.fb-head .ico{width:26px;height:26px}
+.fb-body{padding:12px 14px 14px;display:grid;gap:8px}
+.fb-body p{margin:0}
+.fb-why{font-weight:700}
+.fb-ans{font-weight:800}
+.fb-ans{line-height:1.75}
+.fb-ans b{background:var(--good-bg);border:2px solid var(--good);padding:1px 8px;border-radius:8px;color:#064D30;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.fb-rule{display:flex;gap:10px;align-items:flex-start;background:var(--paper-2);border-radius:10px;padding:8px 10px}
+.fb-rule .tag{flex:none;font:800 .72rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;background:var(--ink);color:#fff;border-radius:6px;padding:5px 7px;margin-top:2px}
+.fb-said{font-size:.98rem;color:var(--ink-2)}
+.fb .btn{width:100%;margin-top:4px}
+
+@media (min-width:960px) and (min-aspect-ratio:1/1){
+  .battle{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);column-gap:22px}
+  .hud{grid-column:1/-1}
+  .arena{height:auto;grid-row:2}
+  .card-col{grid-row:2}
+  .enemy{height:70%}
+  .hero-sprite{height:48%}
+}
+@media (max-height:520px) and (min-aspect-ratio:1/1){
+  .battle{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);grid-template-rows:auto minmax(0,1fr);column-gap:14px}
+  .hud{grid-column:1/-1}
+  .arena{height:auto;grid-row:2}
+  .card-col{grid-row:2}
+}
+@media (max-width:420px){
+  .opts.two{grid-template-columns:minmax(0,1fr)}
+  .hud-score b{font-size:1.25rem}
+  .icon-btn{width:50px;height:50px}
+  .type-row.short{grid-template-columns:minmax(0,1fr)}
+}
+
+/* ---------- Overlay (banners & pause) ---------- */
+.overlay{position:fixed;inset:0;z-index:50;display:grid;place-items:center;overflow-y:auto;
+  background:rgba(10,6,30,.86);
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.ov-card{position:relative;overflow:hidden;width:min(560px,100%);border:3px solid #000;border-radius:24px;
+  background:linear-gradient(180deg,#2E2470,#160F40);box-shadow:8px 8px 0 #000;padding:22px 20px 20px;text-align:center;display:grid;gap:12px;animation:ovIn .35s cubic-bezier(.3,1.4,.5,1)}
+@keyframes ovIn{from{transform:scale(.85);opacity:0}}
+.ov-card > *{position:relative}
+.ov-card .burst-bg{position:absolute;inset:-60%}
+.ov-kicker{font:800 .85rem/1 var(--body);letter-spacing:.18em;text-transform:uppercase;color:var(--sky)}
+.ov-title{margin:0;font-size:clamp(1.9rem,7vw,3rem)}
+.ov-art{width:min(200px,50vw);margin:0 auto;--d1:#E0314B;--d1s:#9C1530;--d1l:#FF8C9A;--d2:#FFC93C;--d3:#5CF2FF}
+.ov-art svg{width:100%;height:auto;display:block}
+.ov-body{margin:0;font-weight:700;color:var(--on-dark);line-height:1.45}
+.ov-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:10px}
+.ov-stats span{background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.3);border-radius:12px;padding:6px 12px;font-weight:800}
+.ov-btns{display:grid;gap:10px}
+.ov-card.ko{background:linear-gradient(180deg,#5A0B1E,#1E0410)}
+.ov-card.win .ov-title{color:var(--volt)}
+.pause-grid{display:grid;gap:10px}
+
+/* ---------- Report ---------- */
+.report-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center}
+.report-head .portrait{width:84px;height:84px;border-radius:50%;border:3px solid #000;background:var(--night-3);overflow:hidden}
+.report-head .portrait svg{width:100%;height:100%}
+.report-head h1{margin:0;font-size:clamp(1.5rem,5vw,2.3rem)}
+.report-head p{margin:2px 0 0;color:var(--on-dark-2);font-weight:700}
+.rank{width:92px;height:92px;border-radius:50%;display:grid;place-items:center;text-align:center;
+  background:var(--volt);color:var(--ink);border:3px solid #000;box-shadow:4px 4px 0 #000;transform:rotate(-8deg)}
+.rank b{display:block;font:400 2.4rem/1 var(--display)}
+.rank small{display:block;font:800 .68rem/1.1 var(--body);letter-spacing:.06em;text-transform:uppercase}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (min-width:760px){.stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.stat{background:var(--paper);color:var(--ink);border:3px solid #000;border-radius:16px;padding:12px 14px;box-shadow:4px 4px 0 #000}
+.stat small{display:block;font:800 .74rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.stat b{font:400 1.8rem/1.2 var(--display);font-variant-numeric:tabular-nums}
+.bars-grid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){.bars-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bar-row{display:grid;grid-template-columns:minmax(0,8.5em) minmax(48px,1fr) 3.2em;gap:10px;align-items:center;margin:8px 0}
+.bar-row span{font-weight:700;line-height:1.2;font-size:.95rem}
+.bar{height:18px;border-radius:999px;background:var(--paper-2);border:2px solid var(--ink);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--good)}
+.bar i.mid{background:#E0A100}.bar i.low{background:var(--bad)}
+.bar-row b{text-align:right;font-variant-numeric:tabular-nums}
+.bar-row.none b{color:var(--ink-2);font-weight:700}
+.miss-list{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.miss{border:2px solid var(--ink);border-radius:14px;padding:12px 14px;background:#fff;display:grid;gap:6px}
+.miss .mtop{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.miss .q{font-weight:800}
+.miss .you{color:var(--bad);font-weight:700}
+.miss .right{color:#064D30;font-weight:800}
+.miss .fixed{background:var(--good);color:#fff;border-color:#000}
+.miss .rule{font-size:.98rem;color:var(--ink-2)}
+.empty-good{font-weight:800;color:var(--good)}
+
+/* reduced motion */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .petals{display:none}
+}
+
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- TITLE -->
+  <section id="scr-title" class="screen" aria-labelledby="game-title"></section>
+  <!-- HERO SELECT -->
+  <section id="scr-hero" class="screen" hidden aria-labelledby="hero-h"></section>
+  <!-- HOW TO PLAY -->
+  <section id="scr-howto" class="screen" hidden aria-labelledby="howto-h"></section>
+  <!-- TEACHER GUIDE -->
+  <section id="scr-guide" class="screen" hidden aria-labelledby="guide-h"></section>
+  <!-- LEVEL SELECT -->
+  <section id="scr-select" class="screen" hidden aria-labelledby="select-h"></section>
+  <!-- BATTLE -->
+  <section id="scr-battle" class="screen battle" hidden aria-label="Battle">
+    <header class="hud">
+      <div class="hud-portrait" id="hudPortrait"></div>
+      <div class="hud-id">
+        <div class="hud-name" id="hudName">Hero</div>
+        <div class="hearts" id="hearts" role="img" aria-label="Hearts: 3 of 3"></div>
+      </div>
+      <div class="hud-score"><small>Score</small><b id="score">0</b></div>
+      <button class="icon-btn" id="btnPause" type="button" aria-label="Pause (P)"></button>
+      <div class="journey">
+        <small>Progress</small>
+        <div class="jtrack" id="jtrack" role="progressbar" aria-label="Game progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="jfill" id="jfill"></div></div>
+      </div>
+    </header>
+    <div class="arena" id="arena" data-scene="city" data-phase="0">
+      <div class="burst-bg"></div>
+      <div class="scene" id="scene"></div>
+      <div class="petals" id="petals"></div>
+      <div class="eplate">
+        <div class="ename" id="ename">Enemy</div>
+        <div class="ephase" id="ephase"></div>
+        <div class="hpbar" role="progressbar" aria-label="Enemy energy" id="hpbar" aria-valuemin="0"><div class="hpfill" id="hpfill"></div><span class="hptext" id="hptext"></span></div>
+      </div>
+      <div class="enemy" id="enemy"></div>
+      <div class="hero-sprite" id="heroSprite"></div>
+      <div class="fx" id="fx"></div>
+    </div>
+    <div class="card-col" id="cardCol">
+      <article class="qcard" id="qcard" aria-live="off"></article>
+    </div>
+  </section>
+  <!-- REPORT -->
+  <section id="scr-report" class="screen" hidden aria-labelledby="report-h"></section>
+</div>
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ov-title"></div>
+<div class="sr" id="live" aria-live="assertive"></div>
+<script>
+/* ============================================================
+   BOSS BATTLE — content bank
+   sk: r = reading, l = listening, w = writing
+   fo: vocab = shows & music words, reg = regular past participles,
+       irr = irregular past participles, ever = Have you ever…? / ever / never
+   t:  mc (first option correct; wrong options are [text, why]),
+       tf (a = true/false), type (acc = accepted answers), build (ans tokens)
+   Passages: \n = new line, [Y] = tick, [N] = cross. **bold** in feedback.
+   ============================================================ */
+
+const LEVELS = [
+  { n: 1, key: 'phantom', name: 'Pixel Phantom', hp: 900, scene: 'city',
+    topic: 'Show & music words · Regular verbs (-ed)',
+    intro: 'A ghost has escaped from an old TV! Use show words and regular verbs to send it back.' },
+  { n: 2, key: 'kitsune', name: 'DJ Kitsune', hp: 1200, scene: 'sunset',
+    topic: 'Music genres · Irregular verbs',
+    intro: 'A fox spirit is stealing all the music in town. Beat it with irregular past participles!' },
+  { n: 3, key: 'oni', name: 'Curtain Oni', hp: 1500, scene: 'circus',
+    topic: 'Have you ever…? · Short answers · ever / never',
+    intro: 'The Oni has closed the theatre. Only perfect questions can open the curtain!' },
+  { n: 4, key: 'dragon', name: 'Encore Dragon', hp: 2100, scene: 'stage', boss: true,
+    topic: 'BOSS · Everything mixed',
+    intro: 'The final boss! It has three forms: a Sound Spell, a Scroll Curse and its Final Form.',
+    phases: [
+      { sk: 'l', name: 'Sound Spell', line: 'Listening challenges' },
+      { sk: 'r', name: 'Scroll Curse', line: 'Reading challenges' },
+      { sk: 'w', name: 'Final Form', line: 'Writing challenges' }
+    ] }
+];
+
+const FOCUS = {
+  vocab: 'Show & music words',
+  reg: 'Regular verbs (-ed)',
+  irr: 'Irregular verbs',
+  ever: 'Have you ever…?'
+};
+const SKILL = { r: 'Reading', l: 'Listening', w: 'Writing' };
+
+const QUESTIONS = [
+/* ======================= LEVEL 1 · PIXEL PHANTOM ======================= */
+// ---- Reading
+{ id: '1R1', lv: 1, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: "It's a show in a big tent. You can see clowns, acrobats and jugglers.",
+  p: 'What is it?',
+  o: ['a circus',
+      ['a concert', 'At a concert, musicians play music for people. There are no clowns!'],
+      ['an exhibition', 'An exhibition is a show of paintings, photos or objects in a museum.'],
+      ['a play', 'In a play, actors tell a story on a stage in a theatre.']],
+  rule: '**circus** = a show in a big tent with clowns, acrobats and jugglers.' },
+{ id: '1R2', lv: 1, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: "It's a film about robots, aliens and life in space in the year 3000.",
+  p: 'What kind of film is it?',
+  o: ['a science fiction film',
+      ['a cartoon', 'A cartoon is made of drawings that move. This film is about the future and space.'],
+      ['a comedy', 'A comedy is a funny film. This film is about robots and space.'],
+      ['a soap opera', 'A soap opera is a TV series about families. It is not a film.']],
+  rule: '**science fiction film** = a film about the future, space, robots or aliens.' },
+{ id: '1R3', lv: 1, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'Come to the City Museum! You can see 200 old photos and paintings. Open every day until May.',
+  p: 'What can you visit?',
+  o: ['an exhibition',
+      ['a food festival', 'At a food festival, you try food. At the museum, you look at photos and paintings.'],
+      ['a circus', 'A circus has clowns and acrobats in a big tent.'],
+      ['a TV show', 'A TV show is on television, not in a museum.']],
+  rule: '**exhibition** = a show of photos, paintings or objects in a museum.' },
+{ id: '1R4', lv: 1, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: "It's a TV series about the lives of the same families. It's on TV every day and the story never ends!",
+  p: 'What is it?',
+  o: ['a soap opera',
+      ['an opera', 'In an opera, people sing all the words on a stage. A soap opera is a TV series with no singing!'],
+      ['a cartoon', 'A cartoon is made of drawings that move.'],
+      ['a concert', 'A concert is live music.']],
+  rule: '**soap opera** = a TV series about the everyday lives of a group of people.' },
+{ id: '1R5', lv: 1, sk: 'r', fo: 'reg', t: 'tf',
+  pas: 'My grandma loves music. She has played the piano at lots of concerts, and she has loved jazz all her life.',
+  p: 'True or false? Grandma has played the piano at concerts.',
+  a: true, why: 'Read again: "She **has played** the piano at lots of concerts."',
+  rule: '**play → played**. "She has played" = she did it at some time in her life.' },
+{ id: '1R6', lv: 1, sk: 'r', fo: 'reg', t: 'tf',
+  pas: "Hi! I'm Max. I have never watched a soap opera, but I have watched lots of cartoons.",
+  p: 'True or false? Max has watched a soap opera.',
+  a: false, why: 'Max says: "I have **never** watched a soap opera."',
+  rule: '**never** + past participle = not at any time in your life.' },
+{ id: '1R7', lv: 1, sk: 'r', fo: 'reg', t: 'mc',
+  pas: "Emma's weekend list:\n[Y] visited an exhibition\n[Y] tried Thai food at a food festival\n[N] called Grandpa",
+  p: 'What has Emma NOT done?',
+  o: ['called Grandpa',
+      ['visited an exhibition', 'There is a tick. Emma **has visited** an exhibition.'],
+      ['tried Thai food', 'There is a tick. Emma **has tried** Thai food.'],
+      ['been to a food festival', 'She tried Thai food at a food festival, so she **has been** there.']],
+  rule: 'Tick = she has done it. Cross = she hasn\'t done it.' },
+{ id: '1R8', lv: 1, sk: 'r', fo: 'reg', t: 'tf',
+  pas: "Ana has looked for her concert ticket everywhere, but she hasn't found it.",
+  p: 'True or false? Ana has found her ticket.',
+  a: false, why: 'Read again: "she **hasn\'t found** it."',
+  rule: '**look → looked** (regular) · **find → found** (irregular).' },
+{ id: '1R9', lv: 1, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: "It's on television every Friday at 7 pm. Young chefs cook, and the winner gets a prize.",
+  p: 'What is it?',
+  o: ['a TV show',
+      ['a play', 'A play is on a stage in a theatre, not on television.'],
+      ['an exhibition', 'An exhibition is in a museum, not on television.'],
+      ['a concert', 'A concert is live music.']],
+  rule: '**TV show** = a programme on television.' },
+
+// ---- Listening
+{ id: '1L1', lv: 1, sk: 'l', fo: 'vocab', t: 'mc', au: 'comedy',
+  p: 'Which word do you hear?',
+  o: ['comedy',
+      ['concert', 'Listen again. The word was **comedy**: a funny film or play.'],
+      ['cartoon', 'Listen again. The word was **comedy**: a funny film or play.'],
+      ['circus', 'Listen again. The word was **comedy**: a funny film or play.']],
+  rule: '**comedy** = a film or play that makes you laugh.' },
+{ id: '1L2', lv: 1, sk: 'l', fo: 'vocab', t: 'mc', au: 'concert',
+  p: 'Which word do you hear?',
+  o: ['concert',
+      ['comedy', 'Listen again. The word was **concert**: live music for people.'],
+      ['classical', 'Listen again. The word was **concert**: live music for people.'],
+      ['cartoon', 'Listen again. The word was **concert**: live music for people.']],
+  rule: '**concert** = a show where musicians play live music.' },
+{ id: '1L3', lv: 1, sk: 'l', fo: 'vocab', t: 'mc', au: 'I love music with loud electric guitars and drums.',
+  p: 'What music does the speaker love?',
+  o: ['rock',
+      ['classical', 'Classical music is played by an orchestra, with violins and piano.'],
+      ['jazz', 'Jazz has trumpets and saxophones.'],
+      ['opera', 'In opera, people sing a story with an orchestra.']],
+  rule: '**rock** = music with loud electric guitars and drums.' },
+{ id: '1L4', lv: 1, sk: 'l', fo: 'vocab', t: 'mc', au: 'In this show, the actors sing all the words, and there is a big orchestra.',
+  p: 'What kind of show is it?',
+  o: ['an opera',
+      ['a soap opera', 'A soap opera is a TV series. The actors talk. They don\'t sing.'],
+      ['a play', 'In a play, actors speak the words.'],
+      ['a cartoon', 'A cartoon is drawings that move.']],
+  rule: '**opera** = a show where people sing all the words.' },
+{ id: '1L5', lv: 1, sk: 'l', fo: 'reg', t: 'mc', au: 'I have visited the science museum three times.',
+  p: 'Which verb do you hear?',
+  o: ['visited',
+      ['visit', 'Listen to the end: visit-**ed**. After have, we use the past participle.'],
+      ['visiting', 'There is no -ing. You heard **visited**.'],
+      ['visits', 'You heard **visited**, with -ed at the end.']],
+  rule: '**visit → visited**. After t or d, -ed sounds like "id": visit-id.' },
+{ id: '1L6', lv: 1, sk: 'l', fo: 'reg', t: 'mc', who: 'Listen to Mia and Tom.',
+  au: ['Have you tried hip hop dancing, Tom?', "Yes, I have! But I haven't tried jazz dancing."],
+  p: 'What has Tom tried?',
+  o: ['hip hop dancing',
+      ['jazz dancing', 'Tom says: "I **haven\'t** tried jazz dancing."'],
+      ['opera singing', 'Nobody talks about opera.'],
+      ['rock music', 'Listen again. They talk about dancing.']],
+  rule: '**try → tried** (y → ied).' },
+{ id: '1L7', lv: 1, sk: 'l', fo: 'vocab', t: 'mc', au: "Let's go to the food festival on Saturday. There's pizza, tacos and sushi!",
+  p: 'Where do they want to go?',
+  o: ['to a food festival',
+      ['to a concert', "Pizza, tacos and sushi? That's food!"],
+      ['to an exhibition', "Pizza, tacos and sushi? That's food!"],
+      ['to the circus', "Pizza, tacos and sushi? That's food!"]],
+  rule: '**food festival** = an event where you try food from many places.' },
+{ id: '1L8', lv: 1, sk: 'l', fo: 'reg', t: 'mc', au: 'She has stopped watching TV shows at night.',
+  p: 'What has she stopped?',
+  o: ['watching TV shows at night',
+      ['playing hip hop', 'Listen again: she has stopped **watching TV shows**.'],
+      ['visiting exhibitions', 'Listen again: she has stopped **watching TV shows**.'],
+      ['calling her friends', 'Listen again: she has stopped **watching TV shows**.']],
+  rule: '**stop → stopped** (double the p).' },
+{ id: '1L9', lv: 1, sk: 'l', fo: 'reg', t: 'mc', au: "I've always wanted to see a circus!",
+  p: 'What has the speaker always wanted to do?',
+  o: ['see a circus',
+      ['see a play', 'Listen again: **a circus**.'],
+      ['go to a concert', 'Listen again: **see a circus**.'],
+      ['watch a cartoon', 'Listen again: **see a circus**.']],
+  rule: '**want → wanted**. "I\'ve" = I have.' },
+
+// ---- Writing
+{ id: '1W1', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'play → ____',
+  acc: ['played'],
+  bad: { plaied: 'Play ends in a vowel + y (a + y). Just add -ed: **played**.', plaid: 'Play ends in a vowel + y. Just add -ed: **played**.', play: 'Add -ed: **played**.' },
+  rule: 'Vowel + y → add -ed: **play → played**.' },
+{ id: '1W2', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'try → ____',
+  acc: ['tried'],
+  bad: { tryed: 'Consonant + y (r + y): change y to i and add -ed: **tried**.', tryied: 'Change y to i, then add -ed: tri + ed = **tried**.', try: 'Change y to i and add -ed: **tried**.' },
+  rule: 'Consonant + y → -ied: **try → tried**.' },
+{ id: '1W3', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'stop → ____',
+  acc: ['stopped'],
+  bad: { stoped: 'Stop is short: one vowel + one consonant. Double the p: **stopped**.', stop: 'Double the p and add -ed: **stopped**.', stopt: 'Double the p and add -ed: **stopped**.' },
+  rule: 'One vowel + one consonant → double it: **stop → stopped**.' },
+{ id: '1W4', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'like → ____',
+  acc: ['liked'],
+  bad: { likeed: 'Like ends in -e. Just add -d: **liked**.', likd: 'Keep the e and add -d: **liked**.', like: 'Add -d: **liked**.' },
+  rule: 'Ends in -e → add -d: **like → liked**, **love → loved**.' },
+{ id: '1W5', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Complete with the past participle.', s: 'I have ____ (watch) three cartoons today.',
+  acc: ['watched'],
+  bad: { watch: 'After have, use the past participle: **watched**.', watching: 'After have, use the past participle (-ed), not -ing: **watched**.', watchd: 'Add -ed: **watched**.' },
+  rule: 'have + past participle: **watch → watched**.' },
+{ id: '1W6', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Complete with the past participle.', s: 'We have ____ (help) at the food festival.',
+  acc: ['helped'],
+  bad: { help: 'After have, use the past participle: **helped**.', helpt: 'Add -ed: **helped**.', helping: 'After have, use the past participle: **helped**.' },
+  rule: 'have + past participle: **help → helped**.' },
+{ id: '1W7', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Complete with the past participle.', s: 'Leo has ____ (learn) a lot about jazz.',
+  acc: ['learned', 'learnt'], show: 'learned / learnt',
+  bad: { learn: 'After has, use the past participle: **learned**.', learning: 'After has, use the past participle: **learned**.' },
+  rule: '**learn → learned** (in British English, **learnt** is also OK).' },
+{ id: '1W8', lv: 1, sk: 'w', fo: 'vocab', t: 'type', p: 'Write the word.', s: 'A film or play that makes you laugh: c _ _ _ _ _',
+  acc: ['comedy'],
+  bad: { comedi: 'Check the spelling: c-o-m-e-d-**y**.', commedy: 'Only one m: **comedy**.', comedie: 'Check the spelling: **comedy**.' },
+  rule: '**comedy** = a funny film or play.' },
+{ id: '1W9', lv: 1, sk: 'w', fo: 'vocab', t: 'type', p: 'Write the word.', s: 'Drawings that move on TV: c _ _ _ _ _ _',
+  acc: ['cartoon'],
+  bad: { carton: 'Two o\'s: **cartoon**.', cartun: 'Check the spelling: **cartoon**.', cartoom: 'It ends in n: **cartoon**.' },
+  rule: '**cartoon** = a film or TV show made of drawings that move.' },
+{ id: '1W10', lv: 1, sk: 'w', fo: 'reg', t: 'build', p: 'Build the sentence.',
+  ans: 'I have visited an exhibition .', ex: ['visit'],
+  exWhy: { visit: 'After have, use the past participle: **visited**.' },
+  rule: 'I have + past participle: **I have visited**…' },
+{ id: '1W11', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'start → ____',
+  acc: ['started'],
+  bad: { startted: 'Start ends in two consonants (r + t). Don\'t double. Just add -ed: **started**.', startd: 'Add -ed: **started**.', start: 'Add -ed: **started**.' },
+  rule: 'Most verbs → add -ed: **start → started**.' },
+{ id: '1W12', lv: 1, sk: 'w', fo: 'reg', t: 'type', p: 'Write the past participle.', s: 'look → ____',
+  acc: ['looked'],
+  bad: { lookt: 'Add -ed: **looked**.', look: 'Add -ed: **looked**.', lookd: 'Add -ed: **looked**.' },
+  rule: 'Most verbs → add -ed: **look → looked**.' },
+
+/* ======================= LEVEL 2 · DJ KITSUNE ======================= */
+// ---- Reading
+{ id: '2R1', lv: 2, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'This music has rapping and strong beats. People often dance to it in the street.',
+  p: 'Which music is it?',
+  o: ['hip hop',
+      ['classical', 'Classical music is by composers like Mozart. No rapping!'],
+      ['opera', 'In opera, people sing a story with an orchestra.'],
+      ['jazz', 'Jazz has trumpets and saxophones.']],
+  rule: '**hip hop** = music with rapping and strong beats.' },
+{ id: '2R2', lv: 2, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'Mozart and Beethoven wrote this music. An orchestra with violins plays it.',
+  p: 'Which music is it?',
+  o: ['classical',
+      ['pop', 'Pop songs are on the radio today. Mozart lived a long time ago!'],
+      ['rock', 'Rock has electric guitars and drums.'],
+      ['hip hop', 'Hip hop has rapping and beats.']],
+  rule: '**classical** = music by composers like Mozart, played by an orchestra.' },
+{ id: '2R3', lv: 2, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'These are short, happy songs. You hear them on the radio all the time, and everybody sings them!',
+  p: 'Which music is it?',
+  o: ['pop',
+      ['opera', 'Opera is a long show with an orchestra, not short radio songs.'],
+      ['classical', 'Classical music is by composers like Mozart.'],
+      ['jazz', 'Jazz has trumpets and saxophones.']],
+  rule: '**pop** = popular songs that you hear on the radio.' },
+{ id: '2R4', lv: 2, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'In this music you can hear trumpets and saxophones. The musicians often make up the music as they play.',
+  p: 'Which music is it?',
+  o: ['jazz',
+      ['rock', 'Rock music has electric guitars and drums.'],
+      ['hip hop', 'Hip hop has rapping and strong beats.'],
+      ['pop', 'Pop is short, happy songs on the radio.']],
+  rule: '**jazz** = music with trumpets and saxophones. Musicians make it up as they play.' },
+{ id: '2R5', lv: 2, sk: 'r', fo: 'irr', t: 'mc',
+  pas: "Lily's blog: I've seen an opera in Italy, and I've heard a famous jazz band in New York. But I've never eaten at a food festival!",
+  p: 'What has Lily never done?',
+  o: ['eaten at a food festival',
+      ['seen an opera', 'Lily says: "I\'ve **seen** an opera in Italy."'],
+      ['heard a jazz band', 'Lily says: "I\'ve **heard** a famous jazz band."'],
+      ['been to Italy', 'She saw an opera in Italy, so she **has been** there.']],
+  rule: '"I\'ve never eaten" = I have not eaten at any time. **eat → eaten**.' },
+{ id: '2R6', lv: 2, sk: 'r', fo: 'irr', t: 'tf',
+  pas: "Ben: I've written three songs, and my band has played them at a rock concert.",
+  p: 'True or false? Ben has written four songs.',
+  a: false, why: 'Ben says: "I\'ve written **three** songs."',
+  rule: '**write → written** (double t).' },
+{ id: '2R7', lv: 2, sk: 'r', fo: 'irr', t: 'mc', p: 'Choose the correct sentence.',
+  o: ['She has drunk hot chocolate at the concert.',
+      ['She has drank hot chocolate at the concert.', '**Drank** is the past simple. The past participle is **drunk**.'],
+      ['She has drinked hot chocolate at the concert.', 'Drink is irregular: drink – drank – **drunk**. No -ed!'],
+      ['She has drink hot chocolate at the concert.', 'After has, use the past participle: **drunk**.']],
+  rule: '**drink – drank – drunk**' },
+{ id: '2R8', lv: 2, sk: 'r', fo: 'irr', t: 'mc', p: 'Choose the correct sentence.',
+  o: ['We have seen a science fiction film.',
+      ['We have saw a science fiction film.', '**Saw** is the past simple. The past participle is **seen**.'],
+      ['We have seed a science fiction film.', 'See is irregular: see – saw – **seen**.'],
+      ['We have see a science fiction film.', 'After have, use the past participle: **seen**.']],
+  rule: '**see – saw – seen**' },
+{ id: '2R9', lv: 2, sk: 'r', fo: 'irr', t: 'mc', p: 'Choose the correct sentence.',
+  o: ['They have taken photos at the exhibition.',
+      ['They have took photos at the exhibition.', '**Took** is the past simple. The past participle is **taken**.'],
+      ['They have taked photos at the exhibition.', 'Take is irregular: take – took – **taken**.'],
+      ['They have take photos at the exhibition.', 'After have, use the past participle: **taken**.']],
+  rule: '**take – took – taken**' },
+{ id: '2R10', lv: 2, sk: 'r', fo: 'irr', t: 'mc',
+  pas: "I've had my guitar for five years. I've played it at lots of rock concerts.",
+  p: 'How long has the speaker had the guitar?',
+  o: ['for five years',
+      ['for fifteen years', 'Read again: **five** years.'],
+      ['for one year', 'Read again: **five** years.'],
+      ['for fifty years', 'Read again: **five** years.']],
+  rule: '**have – had – had**. "I\'ve had" = I have had.' },
+
+// ---- Listening
+{ id: '2L1', lv: 2, sk: 'l', fo: 'vocab', t: 'mc',
+  au: 'My favourite music is very old. A woman sings very high notes in Italian, and the story is like a play.',
+  p: "What is the speaker's favourite music?",
+  o: ['opera',
+      ['pop', 'Pop songs are new and short. This music tells a story with singing.'],
+      ['hip hop', 'Hip hop has rapping, not high notes in Italian.'],
+      ['rock', 'Rock has electric guitars and drums.']],
+  rule: '**opera** = a story with singing, often in Italian.' },
+{ id: '2L2', lv: 2, sk: 'l', fo: 'vocab', t: 'mc', who: 'Listen to two friends.',
+  au: ['What music do your parents like?', 'My dad loves classical music, but my mum prefers jazz. And I like hip hop!'],
+  p: 'What music does the mum like?',
+  o: ['jazz',
+      ['classical', 'Classical is the **dad\'s** music.'],
+      ['hip hop', 'Hip hop is the **speaker\'s** music.'],
+      ['rock', 'Nobody says rock.']],
+  rule: 'prefer = like more.' },
+{ id: '2L3', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: 'Have you ever eaten Chinese food?',
+  p: 'Which word do you hear after "ever"?',
+  o: ['eaten',
+      ['ate', '**Ate** is the past simple. You heard **eaten**.'],
+      ['eat', 'You heard **eaten**, with -en at the end.'],
+      ['eating', 'There is no -ing. You heard **eaten**.']],
+  rule: '**eat – ate – eaten**' },
+{ id: '2L4', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: "I've never met a famous singer, but I've seen one at a concert.",
+  p: 'What has the speaker done?',
+  o: ['seen a famous singer at a concert',
+      ['met a famous singer', 'The speaker says: "I\'ve **never** met a famous singer."'],
+      ['played at a concert', 'Listen again: the speaker has **seen** a singer.'],
+      ['spoken to a famous singer', 'Nobody talks about speaking.']],
+  rule: '**meet – met – met** · **see – saw – seen**' },
+{ id: '2L5', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: "My brother has gone to the hip hop concert. He's there now!",
+  p: 'Where is the brother now?',
+  o: ['at the hip hop concert',
+      ['at home', '"Has **gone**" = he went and he is still there.'],
+      ['at a jazz concert', 'Listen again: **hip hop**.'],
+      ['at the cinema', 'Listen again: he has gone to the **concert**.']],
+  rule: '**has gone** = went and is still there · **has been** = went and came back.' },
+{ id: '2L6', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: "I have read this book three times. It's about a girl who plays jazz.",
+  p: 'How many times has the speaker read the book?',
+  o: ['three times',
+      ['once', 'Listen again: **three** times.'],
+      ['twice', 'Listen again: **three** times.'],
+      ['four times', 'Listen again: **three** times.']],
+  rule: '**read – read – read**. Same spelling, but the past participle sounds like "red".' },
+{ id: '2L7', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: "We've taken lots of photos at the exhibition.",
+  p: 'What have they done?',
+  o: ['taken photos at the exhibition',
+      ['given photos to the exhibition', 'Listen again: **taken**, not given.'],
+      ['found photos at the exhibition', 'Listen again: **taken**, not found.'],
+      ['seen a film', 'They talk about photos at an exhibition.']],
+  rule: '**take – took – taken**. "We\'ve" = we have.' },
+{ id: '2L8', lv: 2, sk: 'l', fo: 'irr', t: 'mc', au: "I've written a song, and I've given it to my best friend.",
+  p: 'What has the speaker given to the friend?',
+  o: ['a song',
+      ['a book', 'Listen again: the speaker has written **a song**.'],
+      ['a photo', 'Listen again: the speaker has written **a song**.'],
+      ['a concert ticket', 'Listen again: the speaker has written **a song**.']],
+  rule: '**write – wrote – written** · **give – gave – given**' },
+
+// ---- Writing
+{ id: '2W1', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'see → ____',
+  acc: ['seen'],
+  bad: { saw: '**Saw** is the past simple. The past participle is **seen**.', seed: 'See is irregular: see – saw – **seen**.', sean: 'Check the spelling: **seen**.' },
+  rule: '**see – saw – seen**' },
+{ id: '2W2', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'eat → ____',
+  acc: ['eaten'],
+  bad: { ate: '**Ate** is the past simple. The past participle is **eaten**.', eated: 'Eat is irregular: eat – ate – **eaten**.', eatn: 'Check the spelling: e-a-t-e-n.', eatten: 'Only one t: **eaten**.' },
+  rule: '**eat – ate – eaten**' },
+{ id: '2W3', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'write → ____',
+  acc: ['written'],
+  bad: { wrote: '**Wrote** is the past simple. The past participle is **written**.', writed: 'Write is irregular: write – wrote – **written**.', writen: 'Double t: **written**.', writted: 'Write is irregular: **written**.' },
+  rule: '**write – wrote – written** (double t)' },
+{ id: '2W4', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'speak → ____',
+  acc: ['spoken'],
+  bad: { spoke: '**Spoke** is the past simple. The past participle is **spoken**.', speaked: 'Speak is irregular: speak – spoke – **spoken**.', spoked: 'No -ed: **spoken**.' },
+  rule: '**speak – spoke – spoken**' },
+{ id: '2W5', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'give → ____',
+  acc: ['given'],
+  bad: { gave: '**Gave** is the past simple. The past participle is **given**.', gived: 'Give is irregular: give – gave – **given**.', give: 'Add -n: **given**.' },
+  rule: '**give – gave – given**' },
+{ id: '2W6', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Complete with the past participle.', s: 'I have ____ (hear) this pop song a hundred times!',
+  acc: ['heard'],
+  bad: { heared: 'Hear is irregular: hear – heard – **heard**.', hear: 'After have, use the past participle: **heard**.', herd: 'Check the spelling: h-e-a-r-d.' },
+  rule: '**hear – heard – heard**' },
+{ id: '2W7', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Complete with the past participle.', s: 'She has ____ (find) her concert ticket.',
+  acc: ['found'],
+  bad: { finded: 'Find is irregular: find – found – **found**.', find: 'After has, use the past participle: **found**.', faund: 'Check the spelling: f-o-u-n-d.' },
+  rule: '**find – found – found**' },
+{ id: '2W8', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Complete with the past participle.', s: 'My dad has ____ (run) a marathon.',
+  acc: ['run'],
+  bad: { ran: '**Ran** is the past simple. The past participle is **run**, the same as the verb!', runned: 'Run is irregular: run – ran – **run**.', runed: 'Run is irregular: run – ran – **run**.' },
+  rule: '**run – ran – run**' },
+{ id: '2W9', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Complete with the past participle.', s: 'My parents have ____ (meet) a famous jazz singer.',
+  acc: ['met'],
+  bad: { meeted: 'Meet is irregular: meet – met – **met**.', meet: 'After have, use the past participle: **met**.', mett: 'One t: **met**.' },
+  rule: '**meet – met – met**' },
+{ id: '2W10', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Complete with the past participle.', s: 'Have you ____ (do) your music homework?',
+  acc: ['done'],
+  bad: { did: '**Did** is the past simple. The past participle is **done**.', doed: 'Do is irregular: do – did – **done**.', do: 'After have, use the past participle: **done**.' },
+  rule: '**do – did – done**' },
+{ id: '2W11', lv: 2, sk: 'w', fo: 'vocab', t: 'type', p: 'Write the music.', s: 'Music with rapping and strong beats: h _ _   h _ _',
+  acc: ['hip hop', 'hiphop'], show: 'hip hop',
+  bad: { 'hip pop': 'It\'s **hip hop**: h-o-p.', 'hit hop': 'It\'s **hip hop**.' },
+  rule: '**hip hop** (two words) = rapping and strong beats.' },
+{ id: '2W12', lv: 2, sk: 'w', fo: 'irr', t: 'build', p: 'Build the sentence.',
+  ans: 'She has taken photos at the concert .', ex: ['took'],
+  exWhy: { took: '**Took** is the past simple. After has, use **taken**.' },
+  rule: '**take – took – taken**' },
+{ id: '2W13', lv: 2, sk: 'w', fo: 'irr', t: 'type', p: 'Write the past participle.', s: 'have → ____',
+  acc: ['had'],
+  bad: { haved: 'Have is irregular: have – had – **had**.', has: '**Has** is the present. The past participle is **had**.', have: 'The past participle is **had**.' },
+  rule: '**have – had – had** (I have had…)' },
+
+/* ======================= LEVEL 3 · CURTAIN ONI ======================= */
+// ---- Reading
+{ id: '3R1', lv: 3, sk: 'r', fo: 'ever', t: 'mc', p: 'Choose the correct question.',
+  o: ['Have you ever been to a circus?',
+      ['Have you ever went to a circus?', '**Went** is the past simple. Use the past participle: **been**.'],
+      ['Has you ever been to a circus?', 'With you, use **have**: Have you ever…?'],
+      ['Did you ever been to a circus?', 'Don\'t use did with a past participle. Use **Have**: Have you ever been…?']],
+  rule: '**Have / Has** + person + **ever** + past participle…?' },
+{ id: '3R2', lv: 3, sk: 'r', fo: 'ever', t: 'mc', p: 'Choose the correct question.',
+  o: ['Has your sister ever seen a play?',
+      ['Have your sister ever seen a play?', 'Your sister = she. With he / she, use **has**.'],
+      ['Has your sister ever saw a play?', '**Saw** is the past simple. Use **seen**.'],
+      ['Has ever your sister seen a play?', 'Word order: **Has + your sister + ever + seen**.']],
+  rule: '**Has** + he / she + **ever** + past participle…?' },
+{ id: '3R3', lv: 3, sk: 'r', fo: 'ever', t: 'mc', p: 'Choose the missing word.',
+  pas: '______ your parents ever been to an opera?',
+  o: ['Have',
+      ['Has', 'Your parents = they (two people). With they, use **have**.'],
+      ['Did', 'Did doesn\'t go with been. Use **have**.'],
+      ['Are', 'Are doesn\'t go with been here. Use **have**.']],
+  rule: 'I / you / we / they → **have** · he / she / it → **has**' },
+{ id: '3R4', lv: 3, sk: 'r', fo: 'ever', t: 'mc',
+  pas: 'A: Have you ever eaten at a food festival?\nB: [Y]',
+  p: "Choose B's answer.",
+  o: ['Yes, I have.',
+      ["Yes, I've.", 'In short answers, don\'t use contractions: **Yes, I have.**'],
+      ['Yes, I eaten.', 'The short answer is: **Yes, I have.**'],
+      ['Yes, I do.', 'The question starts with Have, so answer with **have**.']],
+  rule: 'Have you ever…? → **Yes, I have.** / **No, I haven\'t.**' },
+{ id: '3R5', lv: 3, sk: 'r', fo: 'ever', t: 'mc',
+  pas: 'A: Has Leo ever watched a soap opera?\nB: [N]',
+  p: "Choose B's answer.",
+  o: ["No, he hasn't.",
+      ["No, he haven't.", 'Leo = he. With he, use **hasn\'t**.'],
+      ["No, he doesn't.", 'The question starts with Has, so answer with **hasn\'t**.'],
+      ["No, he isn't.", 'The question starts with Has, so answer with **hasn\'t**.']],
+  rule: 'Has he ever…? → **Yes, he has.** / **No, he hasn\'t.**' },
+{ id: '3R6', lv: 3, sk: 'r', fo: 'ever', t: 'tf',
+  pas: 'Sofia has been to lots of concerts, and she has seen three science fiction films. She has never been to an exhibition, but she wants to go to one next month.',
+  p: 'True or false? Sofia has been to an exhibition.',
+  a: false, why: 'Read again: "She has **never** been to an exhibition."',
+  rule: '**never** = not at any time.' },
+{ id: '3R7', lv: 3, sk: 'r', fo: 'ever', t: 'mc',
+  pas: "Max: Have you ever been to the circus?\nAna: No, I haven't. Have you?\nMax: Yes! I've been twice. The clowns were so funny!",
+  p: 'Who has been to the circus?',
+  o: ['Max',
+      ['Ana', 'Ana says: "No, I **haven\'t**."'],
+      ['Max and Ana', 'Ana hasn\'t been. Only **Max** has.'],
+      ['Nobody', 'Max says: "I\'ve been **twice**."']],
+  rule: '"I\'ve been" = I have been.' },
+{ id: '3R8', lv: 3, sk: 'r', fo: 'ever', t: 'mc',
+  pas: 'Our class survey:\n• 25 students have watched a cartoon this week.\n• 10 students have been to a play.\n• Only 2 students have heard an opera.',
+  p: 'How many students have heard an opera?',
+  o: ['2',
+      ['10', '10 students have been to **a play**.'],
+      ['25', '25 students have watched **a cartoon**.'],
+      ['12', 'Read again: **only 2** students.']],
+  rule: '"have heard" = heard at some time. **hear – heard – heard**' },
+{ id: '3R9', lv: 3, sk: 'r', fo: 'ever', t: 'tf',
+  pas: "Tom: I've never been to a concert, but I've played the guitar in a school play.",
+  p: 'True or false? Tom has played the guitar in a play.',
+  a: true, why: 'Tom says: "I\'ve **played** the guitar in a school play."',
+  rule: '"I\'ve played" = I have played.' },
+
+// ---- Listening
+{ id: '3L1', lv: 3, sk: 'l', fo: 'ever', t: 'mc', au: 'Have you ever been to an exhibition?',
+  p: 'Which question do you hear?',
+  o: ['Have you ever been to an exhibition?',
+      ['Have you ever been to a food festival?', 'Listen again for the last word: **exhibition**.'],
+      ['Has she ever been to an exhibition?', 'You heard **you**, not she.'],
+      ['Have you ever seen an exhibition?', 'You heard **been to**, not seen.']],
+  rule: 'Have you ever **been to** + place / event…?' },
+{ id: '3L2', lv: 3, sk: 'l', fo: 'ever', t: 'mc', au: 'Has your brother ever played in a rock band?',
+  p: 'What does the person want to know?',
+  o: ['if the brother has played in a rock band',
+      ['if the brother likes rock music', 'Listen again: **played in** a rock band.'],
+      ['if the brother has seen a rock band', 'Listen again: **played**, not seen.'],
+      ['if the brother plays the piano', 'Nobody says piano.']],
+  rule: '"Has … ever played?" asks about experience: did it happen at any time?' },
+{ id: '3L3', lv: 3, sk: 'l', fo: 'ever', t: 'mc', who: 'Listen to Tom and Mia.',
+  au: ['Mia, have you ever spoken to a famous actor?', "No, I haven't. But my mum has! She met one at the theatre."],
+  p: 'Who has spoken to a famous actor?',
+  o: ["Mia's mum",
+      ['Mia', 'Mia says: "No, I **haven\'t**."'],
+      ['Tom', 'Tom asks the question. He doesn\'t answer it.'],
+      ['Nobody', 'Mia says: "But **my mum has**!"']],
+  rule: '"My mum has" = my mum has spoken to a famous actor.' },
+{ id: '3L4', lv: 3, sk: 'l', fo: 'ever', t: 'mc', who: 'Listen to a friend and Leo.',
+  au: ['Leo, have you ever tried opera singing?', 'Yes, I have! It was very difficult.'],
+  p: 'Has Leo ever tried opera singing?',
+  o: ['Yes, he has.',
+      ["No, he hasn't.", 'Leo says: "**Yes, I have!**"'],
+      ['Yes, he does.', 'The question uses has, so the answer uses **has**.'],
+      ["No, he didn't.", 'Leo says yes, and the answer uses **has**.']],
+  rule: 'Has he ever…? → **Yes, he has.**' },
+{ id: '3L5', lv: 3, sk: 'l', fo: 'ever', t: 'mc', au: "I've never been to a circus, and I've never seen a soap opera.",
+  p: 'Which sentence is true?',
+  o: ["The speaker hasn't seen a soap opera.",
+      ['The speaker has been to a circus.', 'The speaker says: "I\'ve **never** been to a circus."'],
+      ['The speaker loves soap operas.', 'The speaker has **never** seen one!'],
+      ['The speaker has seen a circus on TV.', 'Nobody says TV.']],
+  rule: '"I\'ve never seen" = I haven\'t seen at any time.' },
+{ id: '3L6', lv: 3, sk: 'l', fo: 'ever', t: 'mc', who: 'Listen to two friends.',
+  au: ['Have your parents ever been to a jazz concert?', "Yes, they have. They've been to three!"],
+  p: 'How many jazz concerts have the parents been to?',
+  o: ['three',
+      ['two', 'Listen again: **three**.'],
+      ['one', 'Listen again: **three**.'],
+      ['none', 'Listen again: "**Yes, they have.**"']],
+  rule: 'Have they ever…? → **Yes, they have.**' },
+{ id: '3L7', lv: 3, sk: 'l', fo: 'ever', t: 'mc', au: 'Has Emma ever written a play?',
+  p: 'The answer is NO. Choose the correct short answer.',
+  o: ["No, she hasn't.",
+      ["No, she haven't.", 'Emma = she, so use **hasn\'t**.'],
+      ["No, she doesn't.", 'The question uses has, so use **hasn\'t**.'],
+      ["No, she didn't.", 'The question uses has, so use **hasn\'t**.']],
+  rule: 'Has she ever…? → **No, she hasn\'t.**' },
+{ id: '3L8', lv: 3, sk: 'l', fo: 'ever', t: 'mc', au: 'My grandpa has worked in a circus, and he has met lots of clowns!',
+  p: 'Where has Grandpa worked?',
+  o: ['in a circus',
+      ['in a theatre', 'Listen again: **in a circus**.'],
+      ['in a museum', 'Listen again: **in a circus**.'],
+      ['at a food festival', 'Listen again: **in a circus**.']],
+  rule: '**work → worked** · **meet – met – met**' },
+
+// ---- Writing
+{ id: '3W1', lv: 3, sk: 'w', fo: 'ever', t: 'build', p: 'Build the question.',
+  ans: 'Have you ever seen an opera ?', ex: ['saw', 'Has'],
+  exWhy: { saw: '**Saw** is the past simple. Use **seen**.', Has: 'With you, use **Have**.' },
+  rule: '**Have** + you + **ever** + past participle…?' },
+{ id: '3W2', lv: 3, sk: 'w', fo: 'ever', t: 'build', p: 'Build the question.',
+  ans: 'Has your dad ever played in a band ?', ex: ['Have', 'play'],
+  exWhy: { Have: 'Your dad = he, so use **Has**.', play: 'After has, use the past participle: **played**.' },
+  rule: '**Has** + he / she + **ever** + past participle…?' },
+{ id: '3W3', lv: 3, sk: 'w', fo: 'ever', t: 'build', p: 'Build the sentence.',
+  ans: 'I have never been to a circus .', ex: ['ever', 'went'],
+  exWhy: { ever: 'In a negative sentence, use **never**: I have never been…', went: '**Went** is the past simple. Use **been**.' },
+  rule: 'I have **never** + past participle.' },
+{ id: '3W4', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Write the missing word.', s: '____ you ever visited an exhibition?',
+  acc: ['have'], show: 'Have',
+  bad: { has: 'With you, use **Have**.', did: 'Use **Have** with a past participle (visited).', do: 'Use **Have** with a past participle (visited).' },
+  rule: '**Have** you ever…?' },
+{ id: '3W5', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Write the missing word.', s: '____ she ever eaten Mexican food?',
+  acc: ['has'], show: 'Has',
+  bad: { have: 'With she, use **Has**.', did: 'Use **Has** with a past participle (eaten).', does: 'Use **Has** with a past participle (eaten).' },
+  rule: '**Has** he / she ever…?' },
+{ id: '3W6', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Complete the short answer.', s: 'A: Have you ever watched a comedy?\nB: Yes, I ____.',
+  acc: ['have', 'yes i have'], show: 'have',
+  bad: { "'ve": 'Don\'t use contractions in short yes answers: **Yes, I have.**', ve: 'Don\'t use contractions in short yes answers: **Yes, I have.**', watched: 'Short answers don\'t repeat the verb: **Yes, I have.**', 'have watched': 'Short answers don\'t repeat the verb: **Yes, I have.**', has: 'With I, use **have**.', do: 'The question uses have, so answer with **have**.' },
+  rule: '**Yes, I have.** (no contraction in short yes answers)' },
+{ id: '3W7', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Complete the short answer.', s: 'A: Has Tom ever been to a concert?\nB: No, he ____.',
+  acc: ["hasn't", 'has not', "no he hasn't"], show: "hasn't",
+  bad: { "haven't": 'Tom = he, so use **hasn\'t**.', "isn't": 'The question uses has, so use **hasn\'t**.', "doesn't": 'The question uses has, so use **hasn\'t**.', "didn't": 'The question uses has, so use **hasn\'t**.' },
+  rule: 'Has he ever…? → **No, he hasn\'t.**' },
+{ id: '3W8', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Write ever or never.', s: 'I have ____ been to a food festival. (not at any time)',
+  acc: ['never'],
+  bad: { ever: 'This sentence means NO (not at any time). Use **never**: I have never been…', not: 'Use **never**: I have never been…' },
+  rule: 'questions → **ever** · negative sentences → **never**' },
+{ id: '3W9', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Write ever or never.', s: 'Have you ____ seen a science fiction film?',
+  acc: ['ever'],
+  bad: { never: 'In questions, use **ever**: Have you ever seen…?' },
+  rule: 'questions → **ever** · negative sentences → **never**' },
+{ id: '3W10', lv: 3, sk: 'w', fo: 'ever', t: 'type', p: 'Complete with the past participle.', s: 'Have you ever ____ (be) to a concert?',
+  acc: ['been'],
+  bad: { was: '**Was** is the past simple. The past participle of be is **been**.', were: '**Were** is the past simple. The past participle of be is **been**.', went: '**Went** is the past simple of go. For experiences, say **been to**.', gone: 'For experiences, we say **been to**: Have you ever been to a concert?', be: 'After have, use the past participle: **been**.', bean: 'Check the spelling: b-e-e-n.', ben: 'Check the spelling: b-e-e-n.' },
+  rule: '**be – was / were – been** · Have you ever **been to**…?' },
+
+/* ======================= LEVEL 4 · ENCORE DRAGON (BOSS) ======================= */
+// ---- Phase 1: Listening
+{ id: '4L1', lv: 4, sk: 'l', fo: 'vocab', t: 'mc',
+  au: "Hi, I'm Lily. I've been to lots of concerts. I've heard rock, pop and jazz bands, but I've never heard an opera.",
+  p: 'What has Lily never heard?',
+  o: ['an opera',
+      ['a jazz band', 'Lily says: "I\'ve heard rock, pop and **jazz** bands."'],
+      ['a rock band', 'Lily says: "I\'ve heard **rock**, pop and jazz bands."'],
+      ['a pop band', 'Lily says: "I\'ve heard rock, **pop** and jazz bands."']],
+  rule: '"I\'ve never heard" = I haven\'t heard at any time.' },
+{ id: '4L2', lv: 4, sk: 'l', fo: 'irr', t: 'mc', who: 'Listen to a friend and Ben.',
+  au: ['Have you ever been to a food festival, Ben?', "Yes, I have. I've eaten tacos, and I've drunk mango juice there."],
+  p: 'What has Ben drunk at the food festival?',
+  o: ['mango juice',
+      ['tacos', 'Ben has **eaten** tacos. You eat tacos, you don\'t drink them!'],
+      ['orange juice', 'Listen again: **mango** juice.'],
+      ['hot chocolate', 'Listen again: **mango juice**.']],
+  rule: '**drink – drank – drunk** · **eat – ate – eaten**' },
+{ id: '4L3', lv: 4, sk: 'l', fo: 'ever', t: 'mc', au: 'My grandparents have watched the same soap opera every day for twenty years!',
+  p: 'How long have they watched it?',
+  o: ['for twenty years',
+      ['for two years', 'Listen again: **twenty**.'],
+      ['for twelve years', 'Listen again: **twenty** (20), not twelve (12).'],
+      ['for one day', 'They watch it **every day**, for twenty years!']],
+  rule: '"have watched … for twenty years" = they started 20 years ago and they still watch it.' },
+{ id: '4L4', lv: 4, sk: 'l', fo: 'ever', t: 'mc', who: 'Listen to a question and an answer.',
+  au: ['Has your class ever visited an exhibition?', "No, we haven't. But we've been to a play at the theatre."],
+  p: 'Where has the class been?',
+  o: ['to a play at the theatre',
+      ['to an exhibition', 'The answer was: "No, we **haven\'t**."'],
+      ['to a circus', 'Listen again: **a play at the theatre**.'],
+      ['to a concert', 'Listen again: **a play at the theatre**.']],
+  rule: '"We\'ve been to" = we have been to.' },
+{ id: '4L5', lv: 4, sk: 'l', fo: 'irr', t: 'mc', au: 'Tom has gone to the circus. Sara has been to the circus.',
+  p: 'Who is at the circus now?',
+  o: ['Tom',
+      ['Sara', 'Sara has **been** = she went and came back.'],
+      ['Tom and Sara', 'Sara has **been** there and she came back home.'],
+      ['Nobody', 'Tom has **gone** = he went and he is still there.']],
+  rule: '**has gone** = is still there · **has been** = went and came back.' },
+{ id: '4L6', lv: 4, sk: 'l', fo: 'ever', t: 'mc', au: "I've written a song, and I've played it for my family. Next year, I want to play it at a concert.",
+  p: 'Which sentence is TRUE?',
+  o: ['The speaker has written a song.',
+      ['The speaker has played the song at a concert.', 'Not yet! The concert is **next year**.'],
+      ['The speaker has never played the song.', 'The speaker has played it **for the family**.'],
+      ["The speaker's family has written a song.", 'The **speaker** wrote the song, not the family.']],
+  rule: '**write – wrote – written** · **play → played**' },
+{ id: '4L7', lv: 4, sk: 'l', fo: 'ever', t: 'mc', au: 'Have you ever seen a science fiction film at the cinema?',
+  p: 'Choose the best answer.',
+  o: ["No, I haven't, but I've seen one on TV.",
+      ["No, I haven't seen.", 'Don\'t stop after seen. Say: **No, I haven\'t.**'],
+      ["Yes, I've.", 'Don\'t use contractions in short answers: **Yes, I have.**'],
+      ['Yes, I saw.', 'Answer with have: **Yes, I have.**']],
+  rule: 'Have you ever…? → **Yes, I have.** / **No, I haven\'t.**' },
+{ id: '4L8', lv: 4, sk: 'l', fo: 'irr', t: 'mc', au: "She's taken photos of the actors, but she hasn't asked for their autographs.",
+  p: 'What has she done?',
+  o: ['taken photos of the actors',
+      ['asked for their autographs', '"She **hasn\'t** asked" = she didn\'t do it.'],
+      ["met the actors' families", 'Listen again: she has **taken photos**.'],
+      ['written to the actors', 'Listen again: she has **taken photos**.']],
+  rule: '"She\'s taken" = She has taken. **take – took – taken**' },
+{ id: '4L9', lv: 4, sk: 'l', fo: 'reg', t: 'mc', who: 'Listen to two friends.',
+  au: ['Hurry up! The concert has started!', 'Oh no! Have they played my favourite song?'],
+  p: 'What has happened?',
+  o: ['The concert has started.',
+      ['The concert has stopped.', 'Listen again: **started**, not stopped.'],
+      ['They have played her favourite song.', 'That is a question. We don\'t know the answer!'],
+      ['The concert has finished.', 'Listen again: the concert has **started**.']],
+  rule: '**start → started** · **stop → stopped**' },
+
+// ---- Phase 2: Reading
+{ id: '4R1', lv: 4, sk: 'r', fo: 'ever', t: 'mc',
+  pas: "Hi! I'm Ana. This year has been amazing! I've been to my first rock concert, and I've seen a comedy at the theatre. I've also tried Korean food at a food festival. But I've never been to an exhibition. Maybe next year!",
+  p: 'What has Ana NOT done this year?',
+  o: ['been to an exhibition',
+      ['seen a comedy', 'Ana says: "I\'ve **seen a comedy** at the theatre."'],
+      ['tried Korean food', 'Ana says: "I\'ve also **tried Korean food**."'],
+      ['been to a rock concert', 'Ana says: "I\'ve **been to my first rock concert**."']],
+  rule: '**never** = not at any time.' },
+{ id: '4R2', lv: 4, sk: 'r', fo: 'reg', t: 'mc',
+  pas: "Leo's music diary\nMonday: I've learned a jazz song on the piano.\nTuesday: I've helped my sister with her hip hop dance.\nWednesday: I've stopped playing video games. Too much homework!",
+  p: 'What has Leo learned?',
+  o: ['a jazz song',
+      ['a hip hop dance', 'Leo has **helped** his sister with that.'],
+      ['a rock song', 'Read Monday again: **a jazz song**.'],
+      ['a video game', 'He has **stopped** playing video games.']],
+  rule: '**learn → learned** · **help → helped** · **stop → stopped**' },
+{ id: '4R3', lv: 4, sk: 'r', fo: 'vocab', t: 'tf',
+  pas: 'CITY FOOD FESTIVAL\nSaturday, 10 am – 6 pm\nTry food from 20 countries!\nLive pop music at 4 pm\nChildren under 10: free',
+  p: 'True or false? There is jazz music at the festival.',
+  a: false, why: 'The poster says: live **pop** music at 4 pm.',
+  rule: 'Read the poster carefully: it says **pop**, not jazz.' },
+{ id: '4R4', lv: 4, sk: 'r', fo: 'ever', t: 'mc',
+  pas: "Mia: Have you ever seen a soap opera?\nTom: Yes, I've watched one with my grandma. It was boring!\nMia: Have you ever seen a cartoon in English?\nTom: No, I haven't. But I want to!",
+  p: 'What does Tom want to do?',
+  o: ['watch a cartoon in English',
+      ['watch a soap opera again', 'Tom thinks soap operas are **boring**!'],
+      ['visit his grandma', 'Tom wants to see **a cartoon in English**.'],
+      ['make a cartoon', 'Tom wants to **see** a cartoon in English.']],
+  rule: '"No, I haven\'t. But I want to!" = He hasn\'t seen one, but he wants to see one.' },
+{ id: '4R5', lv: 4, sk: 'r', fo: 'irr', t: 'mc', p: 'Find the sentence with a MISTAKE.',
+  o: ['Have you ever drank coffee?',
+      ['She has never been to a circus.', 'This sentence is correct. Look for a **past simple** verb after have.'],
+      ['Have they ever met a pop star?', 'This sentence is correct: meet – met – **met**.'],
+      ["I've read this book twice.", 'This sentence is correct: read – read – **read**.']],
+  rule: 'The mistake: drank → **drunk**. Have you ever **drunk** coffee?' },
+{ id: '4R6', lv: 4, sk: 'r', fo: 'ever', t: 'mc', p: 'Choose the best answer.',
+  pas: 'A: Has your brother ever played rock music?\nB: ______',
+  o: ['Yes, he has. He plays the electric guitar.',
+      ['Yes, he have. He plays the electric guitar.', 'Your brother = he, so use **has**.'],
+      ['Yes, he does. He plays the electric guitar.', 'The question uses has, so start with: **Yes, he has.**'],
+      ["No, he hasn't never.", 'Don\'t use two negatives: **No, he hasn\'t.**']],
+  rule: 'Has he ever…? → **Yes, he has.**' },
+{ id: '4R7', lv: 4, sk: 'r', fo: 'vocab', t: 'mc',
+  pas: 'THE BIG SHOW\nThis weekend at the City Theatre: a funny play about a crazy family. Everybody laughs from start to finish!',
+  p: 'What kind of show is it?',
+  o: ['a comedy',
+      ['a science fiction film', 'It\'s a play about a family, not about space.'],
+      ['an opera', 'Nobody sings, and it\'s **funny**!'],
+      ['a soap opera', 'A soap opera is a TV series. This is a play at a theatre.']],
+  rule: '**comedy** = a funny play or film.' },
+{ id: '4R8', lv: 4, sk: 'r', fo: 'ever', t: 'tf',
+  pas: "Grandpa: I've worked in a circus, I've visited 30 countries, and I've met a famous opera singer. But I've never been on TV!",
+  p: 'True or false? Grandpa has been on TV.',
+  a: false, why: 'Grandpa says: "I\'ve **never** been on TV!"',
+  rule: '**never** = not at any time.' },
+{ id: '4R9', lv: 4, sk: 'r', fo: 'reg', t: 'mc',
+  pas: "Hi, I'm Sam. I have called my friend Leo five times today, but he hasn't answered. Has he gone to the concert without me?!",
+  p: 'How many times has Sam called Leo?',
+  o: ['five times',
+      ['once', 'Read again: **five times**.'],
+      ['four times', 'Read again: **five times**.'],
+      ['He hasn\'t called him.', 'Sam says: "I **have called** my friend Leo five times."']],
+  rule: '**call → called**' },
+
+// ---- Phase 3: Writing
+{ id: '4W1', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Write the question.', s: '(you / ever / see / a circus)',
+  acc: ['have you ever seen a circus'], show: 'Have you ever seen a circus?', long: true,
+  pat: [['\\bsaw\\b', '**Saw** is the past simple. Use **seen**.'],
+        ['^has you', 'With you, use **Have**.'],
+        ['^(did|do)\\b', 'Start with **Have**: Have you ever seen…?'],
+        ['\\bseed\\b', 'See is irregular: see – saw – **seen**.'],
+        ['^(?!.*\\bever\\b)', 'Don\'t forget **ever**.'],
+        ['^you ', 'A question starts with **Have**: Have you ever…?']],
+  rule: '**Have** you **ever** + past participle…?' },
+{ id: '4W2', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Write the question.', s: '(your mum / ever / eat / sushi)',
+  acc: ['has your mum ever eaten sushi', 'has your mom ever eaten sushi'], show: 'Has your mum ever eaten sushi?', long: true,
+  pat: [['^have your', 'Your mum = she, so use **Has**.'],
+        ['\\bate\\b', '**Ate** is the past simple. Use **eaten**.'],
+        ['\\beated\\b', 'Eat is irregular: eat – ate – **eaten**.'],
+        ['^(does|did|do)\\b', 'Start with **Has**: Has your mum ever eaten…?'],
+        ['^(?!.*\\bever\\b)', 'Don\'t forget **ever**.'],
+        ['^your ', 'A question starts with **Has**: Has your mum ever…?']],
+  rule: '**Has** + she + **ever** + past participle…?' },
+{ id: '4W3', lv: 4, sk: 'w', fo: 'irr', t: 'type', p: 'Find the mistake and write the correct word.', s: 'I have never writed a song.',
+  acc: ['written'],
+  bad: { wrote: '**Wrote** is the past simple. Use the past participle: **written**.', writen: 'Double t: **written**.', write: 'After have, use the past participle: **written**.' },
+  rule: '**write – wrote – written**' },
+{ id: '4W4', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Find the mistake and write the correct word.', s: 'A: Have your parents ever been to an opera?\nB: Yes, they has.',
+  acc: ['have', 'yes they have'], show: 'have',
+  bad: { has: 'They → **have**: Yes, they have.', "'ve": 'Don\'t use contractions in short yes answers: **Yes, they have.**' },
+  rule: 'They → **Yes, they have.** / **No, they haven\'t.**' },
+{ id: '4W5', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Write a sentence with never.', s: '(I / be / to a jazz concert)',
+  acc: ['i have never been to a jazz concert'], show: "I have never been to a jazz concert. / I've never been to a jazz concert.", long: true,
+  pat: [['\\bwas\\b', 'Use the past participle of be: **been**.'],
+        ['\\bgone\\b', 'For experiences, say **been to**.'],
+        ['\\bwent\\b', '**Went** is the past simple. Use **been**.'],
+        ['\\bnot\\b.*\\bnever\\b|\\bnever\\b.*\\bnot\\b', 'Don\'t use two negatives. Just **never**: I have never been…'],
+        ['\\bever\\b', 'Use **never** in this sentence.'],
+        ['^(?!i have)', 'Start with **I have** or **I\'ve**: I\'ve never been…']],
+  rule: 'I have / I\'ve **never** + past participle.' },
+{ id: '4W6', lv: 4, sk: 'w', fo: 'irr', t: 'build', p: 'Build the question.',
+  ans: 'Has she ever spoken to a famous pop singer ?', ex: ['spoke', 'Have'],
+  exWhy: { spoke: '**Spoke** is the past simple. Use **spoken**.', Have: 'She → **Has**.' },
+  rule: '**speak – spoke – spoken** · **Has** she ever…?' },
+{ id: '4W7', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Write the short answer. The answer is NO.', s: 'A: Have you ever played in a band?\nB: ____',
+  acc: ['no i have not'], show: "No, I haven't.", long: true,
+  pat: [['^yes', 'The answer is NO.'],
+        ['\\bplayed\\b', 'Short answers don\'t repeat the verb: **No, I haven\'t.**'],
+        ['\\bhas\\b', 'With I, use have: **No, I haven\'t.**'],
+        ['\\b(do|did)\\b', 'The question uses have: **No, I haven\'t.**'],
+        ['\\bnever\\b', 'Short answer: **No, I haven\'t.**']],
+  rule: 'Have you ever…? → **No, I haven\'t.**' },
+{ id: '4W8', lv: 4, sk: 'w', fo: 'reg', t: 'type', p: 'Complete with the past participle.', s: "We've ____ (learn) a lot about classical music.",
+  acc: ['learned', 'learnt'], show: 'learned / learnt',
+  bad: { learn: 'After have, use the past participle: **learned**.', learning: 'After have, use the past participle: **learned**.' },
+  rule: '**learn → learned** (or **learnt** in British English)' },
+{ id: '4W9', lv: 4, sk: 'w', fo: 'ever', t: 'build', p: 'Build the sentence.',
+  ans: 'They have never watched a science fiction film .', ex: ['ever', 'watch'],
+  exWhy: { ever: 'In a negative sentence, use **never**.', watch: 'After have, use the past participle: **watched**.' },
+  rule: 'They have **never** + past participle.' },
+{ id: '4W10', lv: 4, sk: 'w', fo: 'ever', t: 'type', p: 'Write the first two words of the question.', s: '____ ____ ever been to a concert?\nAnswer: Yes, I have. I\'ve been to two concerts!',
+  acc: ['have you'], show: 'Have you',
+  pat: [['^has', 'The answer says "I have", so the question is about **you**: Have you…?'],
+        ['^(did|do)\\b', 'The answer uses have, so the question uses **Have you**…?'],
+        ['^have (he|she|they|i)\\b', 'The answer says "I have", so the question is about **you**: Have you…?'],
+        ['^you have', 'Question word order: **Have you**…?']],
+  rule: 'Have you ever…? → **Yes, I have.**' }
+];
+
+/* The 31 unit verbs (for the teacher's guide) */
+const VERBS = {
+  regular: [
+    ['like', 'liked', '+d'], ['love', 'loved', '+d'], ['play', 'played', '+ed'], ['work', 'worked', '+ed'],
+    ['visit', 'visited', '+ed'], ['help', 'helped', '+ed'], ['ask', 'asked', '+ed'], ['look', 'looked', '+ed'],
+    ['start', 'started', '+ed'], ['stop', 'stopped', 'pp + ed'], ['learn', 'learned / learnt', '+ed'],
+    ['try', 'tried', 'y → ied'], ['call', 'called', '+ed'], ['watch', 'watched', '+ed'], ['want', 'wanted', '+ed']
+  ],
+  irregular: [
+    ['be', 'was / were', 'been'], ['have', 'had', 'had'], ['do', 'did', 'done'], ['eat', 'ate', 'eaten'],
+    ['go', 'went', 'gone / been'], ['drink', 'drank', 'drunk'], ['see', 'saw', 'seen'], ['hear', 'heard', 'heard'],
+    ['speak', 'spoke', 'spoken'], ['write', 'wrote', 'written'], ['read', 'read', 'read'], ['find', 'found', 'found'],
+    ['give', 'gave', 'given'], ['take', 'took', 'taken'], ['meet', 'met', 'met'], ['run', 'ran', 'run']
+  ]
+};
+
+const VOCAB = {
+  shows: [
+    ['cartoon', 'a film or TV show made of drawings that move'],
+    ['circus', 'a show in a big tent with clowns, acrobats and jugglers'],
+    ['comedy', 'a funny film or play'],
+    ['concert', 'a show where musicians play live music'],
+    ['exhibition', 'a show of photos, paintings or objects in a museum'],
+    ['food festival', 'an event where you try food from many places'],
+    ['play', 'a story that actors perform on a stage'],
+    ['science fiction film', 'a film about the future, space, robots or aliens'],
+    ['soap opera', 'a TV series about the everyday lives of a group of people'],
+    ['TV show', 'a programme on television']
+  ],
+  music: [
+    ['classical', 'music by composers like Mozart, played by an orchestra'],
+    ['hip hop', 'music with rapping and strong beats'],
+    ['jazz', 'music with trumpets and saxophones; musicians make it up as they play'],
+    ['opera', 'a show where people sing all the words, with an orchestra'],
+    ['pop', 'popular songs you hear on the radio'],
+    ['rock', 'music with loud electric guitars and drums']
+  ]
+};
+
+const PRACTICE_Q = { id: 'P1', lv: 0, sk: 'r', fo: 'vocab', t: 'mc', p: 'Practice: which one is a type of MUSIC?',
+  o: ['jazz', ['circus', 'A circus is a show in a big tent. Jazz is music!']],
+  rule: '**jazz** is music. A **circus** is a show.' };
+
+/* ============================================================
+   BOSS BATTLE — original SVG art (no franchise characters)
+   ============================================================ */
+const ART = (function () {
+  const OUT = '#1B1035';
+  let n = 0;
+  const uid = () => 'a' + (++n);
+
+  /* ---------------- Heroes ---------------- */
+  const HEROES = [
+    { key: 'blaze', name: 'Blaze', element: 'Fire', style: 'spiky',
+      hair: '#E8433D', hairD: '#9E1B2B', hairL: '#FF9A7A', skin: '#F7D4BC', skinD: '#E2AC8E',
+      iris: ['#FFB03A', '#A83A0C'], jacket: '#2D3E9E', jacketD: '#1C2766', scarf: '#FFC93C', scarfD: '#D9961A', fx: '#FF7A2E' },
+    { key: 'sakura', name: 'Sakura', element: 'Blossom', style: 'twin',
+      hair: '#FF85BA', hairD: '#C8417E', hairL: '#FFC9DF', skin: '#FBE3D1', skinD: '#EBBDA3',
+      iris: ['#E58BFF', '#651A93'], jacket: '#22A699', jacketD: '#137066', scarf: '#FF4F7B', scarfD: '#C22F57', fx: '#FF6FB0' },
+    { key: 'volt', name: 'Volt', element: 'Thunder', style: 'messy',
+      hair: '#2A2B55', hairD: '#15153A', hairL: '#FFD43B', skin: '#9A6240', skinD: '#77482D',
+      iris: ['#FFE066', '#A86F00'], jacket: '#7A3FE0', jacketD: '#4F23A3', scarf: '#2EE6FF', scarfD: '#1AA0BA', fx: '#FFE14D' },
+    { key: 'tide', name: 'Tide', element: 'Wave', style: 'bob',
+      hair: '#2F7BFF', hairD: '#1B49B8', hairL: '#9CC6FF', skin: '#E0A97F', skinD: '#BF845E',
+      iris: ['#6AF3FF', '#0B5F80'], jacket: '#E8433D', jacketD: '#A62A26', scarf: '#FFFFFF', scarfD: '#C5CFEE', fx: '#47C8FF' }
+  ];
+
+  function eye(cx, flip, u) {
+    const f = flip ? 1 : -1;
+    return `<g>
+      <ellipse cx="${cx}" cy="59" rx="8.2" ry="10" fill="#fff"/>
+      <ellipse cx="${cx}" cy="60" rx="6.4" ry="8.4" fill="url(#ir${u})"/>
+      <ellipse cx="${cx}" cy="61.4" rx="3.1" ry="4.8" fill="#140A2E"/>
+      <circle cx="${cx - 2.3}" cy="55.8" r="2.6" fill="#fff"/>
+      <circle cx="${cx + 2.5}" cy="64" r="1.25" fill="#fff"/>
+      <path d="M${cx - 9.6},53.5 Q${cx},44.6 ${cx + 9.6},53.5" fill="none" stroke="#140A2E" stroke-width="3.4" stroke-linecap="round"/>
+      <path d="M${cx + f * 9.4},53.2 l${f * 3.2},-2.6" stroke="#140A2E" stroke-width="2.6" stroke-linecap="round"/>
+    </g>`;
+  }
+
+  function hairBack(h) {
+    const s = `fill="${h.hair}" stroke="${OUT}" stroke-width="2.6" stroke-linejoin="round"`;
+    if (h.style === 'spiky') return `<path ${s} d="M26,64 L12,52 L24,45 L10,31 L28,31 L22,12 L40,20 L44,4 L56,16 L66,2 L72,16 L88,6 L88,22 L104,18 L96,34 L112,38 L98,49 L108,62 L94,64 Z"/>`;
+    if (h.style === 'twin') return `
+      <path ${s} d="M26,48 C8,58 2,92 12,128 C16,118 22,110 24,98 C26,112 30,118 34,124 C38,100 36,74 34,58 Z"/>
+      <path ${s} d="M94,48 C112,58 118,92 108,128 C104,118 98,110 96,98 C94,112 90,118 86,124 C82,100 84,74 86,58 Z"/>
+      <path ${s} d="M22,58 C18,30 36,12 60,12 C84,12 102,30 98,58 C96,70 90,76 88,78 L32,78 C30,76 24,70 22,58 Z"/>
+      <path d="M26,48 L13,40 L15,57 Z M26,48 L39,40 L37,57 Z M94,48 L81,40 L83,57 Z M94,48 L107,40 L105,57 Z" fill="${h.scarf}" stroke="${OUT}" stroke-width="2.2" stroke-linejoin="round"/>
+      <circle cx="26" cy="48" r="3.6" fill="${h.scarfD}" stroke="${OUT}" stroke-width="2"/>
+      <circle cx="94" cy="48" r="3.6" fill="${h.scarfD}" stroke="${OUT}" stroke-width="2"/>`;
+    if (h.style === 'messy') return `<path ${s} d="M22,62 C12,48 18,24 36,16 C44,4 70,2 82,12 C100,14 112,32 104,48 C112,56 104,66 98,64 L24,70 C16,70 16,64 22,62 Z"/>`;
+    return `<path ${s} d="M20,60 C16,30 36,10 60,10 C84,10 104,30 100,60 L102,86 C98,94 88,92 86,86 L34,86 C32,92 22,94 18,86 Z"/>`;
+  }
+
+  function hairFront(h) {
+    const s = `fill="${h.hair}" stroke="${OUT}" stroke-width="2.6" stroke-linejoin="round"`;
+    if (h.style === 'spiky') return `
+      <path ${s} d="M28,56 C26,30 42,15 60,15 C78,15 94,30 92,56 L87,41 L82,49 L76,35 L69,46 L62,31 L55,46 L48,34 L42,49 L36,39 L32,50 Z"/>
+      <path d="M42,23 Q60,15 78,23" stroke="${h.hairL}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>`;
+    if (h.style === 'twin') return `
+      <path ${s} d="M28,52 C26,64 28,76 32,82 L37,80 C33,70 32,60 33,52 Z"/>
+      <path ${s} d="M92,52 C94,64 92,76 88,82 L83,80 C87,70 88,60 87,52 Z"/>
+      <path ${s} d="M28,56 C26,30 42,14 60,14 C78,14 94,30 92,56 C90,50 88,44 86,42 L82,48 L77,40 L71,47 L65,39 L60,46 L54,39 L48,47 L43,40 L38,48 L34,42 C32,46 30,50 28,56 Z"/>
+      <path d="M40,22 Q60,13 80,22" stroke="${h.hairL}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>`;
+    if (h.style === 'messy') return `
+      <path ${s} d="M48,18 L43,3 L58,14 Z"/>
+      <path ${s} d="M64,14 L79,2 L76,18 Z"/>
+      <path ${s} d="M27,58 C24,30 42,13 62,13 C82,13 97,30 93,58 L90,44 C86,50 80,50 76,44 C72,50 64,52 58,46 C54,52 46,52 42,45 C38,50 32,52 27,58 Z"/>
+      <path d="M63,15 C71,22 75,32 77,44" stroke="${h.hairL}" stroke-width="4.2" fill="none" stroke-linecap="round"/>`;
+    return `
+      <path ${s} d="M28,46 C26,62 28,78 32,86 L40,86 C36,74 34,60 34,48 Z"/>
+      <path ${s} d="M92,46 C94,62 92,78 88,86 L80,86 C84,74 86,60 86,48 Z"/>
+      <path ${s} d="M28,54 C26,30 42,14 60,14 C78,14 94,30 92,54 L92,42 C84,46 72,47 60,45 C48,47 36,46 28,42 Z"/>
+      <path d="M40,22 Q60,13 80,22" stroke="${h.hairL}" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>
+      <path d="M84,24 l2.4,5 5.4,.6 -4,3.8 1.1,5.4 -4.9,-2.7 -4.8,2.7 1,-5.4 -4,-3.8 5.4,-.6 Z" fill="#FFC93C" stroke="${OUT}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  }
+
+  function hero(h, opts) {
+    opts = opts || {};
+    const u = uid();
+    const vb = opts.face ? '22 6 76 76' : '0 0 120 150';
+    const sw = `stroke="${OUT}" stroke-width="2.6" stroke-linejoin="round"`;
+    return `<svg class="hero-svg" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs><linearGradient id="ir${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${h.iris[1]}"/><stop offset="1" stop-color="${h.iris[0]}"/></linearGradient></defs>
+      ${hairBack(h)}
+      <path class="scarf-tail" d="M74,100 C88,98 100,104 113,93 C111,108 101,116 85,112 C91,118 97,122 105,122 C95,129 80,125 72,108 Z" fill="${h.scarf}" ${sw}/>
+      <path d="M36,104 C26,112 22,126 24,138 L34,138 C34,128 36,118 40,112 Z" fill="${h.jacket}" ${sw}/>
+      <path d="M84,104 C94,112 98,126 96,138 L86,138 C86,128 84,118 80,112 Z" fill="${h.jacket}" ${sw}/>
+      <path d="M30,150 L30,140 C30,112 38,98 60,96 C82,98 90,112 90,140 L90,150 Z" fill="${h.jacket}" ${sw}/>
+      <path d="M74,100 C84,106 88,120 89,140 L89,150 L79,150 L79,140 C79,124 77,110 74,100 Z" fill="${h.jacketD}"/>
+      <path d="M60,108 L60,150" stroke="${h.jacketD}" stroke-width="2.4"/>
+      <circle cx="29" cy="139" r="5.6" fill="${h.skin}" ${sw}/>
+      <circle cx="91" cy="139" r="5.6" fill="${h.skin}" ${sw}/>
+      <path d="M53,82 L67,82 L67,98 L53,98 Z" fill="${h.skinD}"/>
+      <path d="M42,96 C50,102 70,102 78,96 L80,104 C70,111 50,111 40,104 Z" fill="${h.scarf}" ${sw}/>
+      <path d="M46,103 C54,106 66,106 74,103" stroke="${h.scarfD}" stroke-width="2" fill="none"/>
+      <ellipse cx="28.5" cy="59" rx="4.6" ry="6.6" fill="${h.skin}" ${sw}/>
+      <ellipse cx="91.5" cy="59" rx="4.6" ry="6.6" fill="${h.skin}" ${sw}/>
+      <path d="M28,52 C28,30 42,18 60,18 C78,18 92,30 92,52 C92,70 83,83 60,90 C37,83 28,70 28,52 Z" fill="${h.skin}" ${sw}/>
+      <path d="M30,48 C40,42 80,42 90,48 L90,55 C80,50 40,50 30,55 Z" fill="${h.skinD}" opacity=".5"/>
+      ${eye(46, false, u)}${eye(74, true, u)}
+      <path d="M60.5,66 l-1.3,2.6" stroke="${h.skinD}" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M54.5,74.5 Q60,81 65.5,74.5 Z" fill="#8B2E3C" stroke="${OUT}" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M57.5,77.6 Q60,79.4 62.5,77.6" fill="#FF8FA3"/>
+      <ellipse cx="38.5" cy="69.5" rx="5.2" ry="2.6" fill="#FF6F92" opacity=".42"/>
+      <ellipse cx="81.5" cy="69.5" rx="5.2" ry="2.6" fill="#FF6F92" opacity=".42"/>
+      ${hairFront(h)}
+      <path d="M38,43.5 Q45,41.6 53,45.6" stroke="${h.hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+      <path d="M67,45.6 Q75,41.6 82,43.5" stroke="${h.hairD}" stroke-width="2.8" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  /* ---------------- Enemies ---------------- */
+  function pixels(rows, x0, y0, c) {
+    const col = { '#': OUT, o: '#FFFFFF', w: '#FFFFFF', p: '#FF4F96' };
+    let out = '';
+    rows.forEach((r, y) => {
+      [...r].forEach((ch, x) => {
+        if (col[ch]) out += `<rect x="${x0 + x * c}" y="${y0 + y * c}" width="${c}" height="${c}" fill="${col[ch]}"/>`;
+      });
+    });
+    return out;
+  }
+
+  function phantom() {
+    const u = uid();
+    const face = pixels([
+      '................',
+      '..##........##..',
+      '...##......##...',
+      '................',
+      '..###......###..',
+      '..#o#......#o#..',
+      '..###......###..',
+      '.p............p.',
+      '....#......#....',
+      '.....######.....',
+      '......w..w......',
+      '................'], 54, 44, 6);
+    let scan = '';
+    for (let y = 47; y < 120; y += 5) scan += `<rect x="54" y="${y}" width="96" height="1.6" fill="#ffffff" opacity=".16"/>`;
+    return `<svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="pb${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C39BFF"/><stop offset="1" stop-color="#6A4BD6" stop-opacity=".78"/></linearGradient>
+        <radialGradient id="ps${u}" cx=".5" cy=".42" r=".75"><stop offset="0" stop-color="#9DFFF5"/><stop offset=".65" stop-color="#2BC9E8"/><stop offset="1" stop-color="#0F6C9C"/></radialGradient>
+      </defs>
+      <ellipse cx="110" cy="222" rx="56" ry="6" fill="#000" opacity=".28"/>
+      <g class="bob">
+        <path d="M64,118 C58,150 60,178 68,204 C76,194 82,198 90,208 C98,196 106,200 112,210 C120,198 128,200 134,208 C142,196 148,194 154,202 C162,178 164,150 158,118 Z" fill="url(#pb${u})" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M84,150 C84,170 88,186 94,198 M134,150 C134,170 132,186 128,198" stroke="#ffffff" stroke-width="3" opacity=".25" fill="none" stroke-linecap="round"/>
+        <path d="M66,140 C46,146 30,134 24,116 C34,122 46,124 60,122 Z" fill="url(#pb${u})" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M154,140 C174,146 190,134 196,116 C186,122 174,124 160,122 Z" fill="url(#pb${u})" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M92,32 L72,7 M128,32 L150,7" stroke="${OUT}" stroke-width="4.5" stroke-linecap="round"/>
+        <circle cx="72" cy="7" r="6.5" fill="#FF4F96" stroke="${OUT}" stroke-width="3"/>
+        <circle cx="150" cy="7" r="6.5" fill="#FFC93C" stroke="${OUT}" stroke-width="3"/>
+        <rect x="38" y="30" width="144" height="106" rx="20" fill="#3A2F6B" stroke="${OUT}" stroke-width="4.5"/>
+        <rect x="45" y="37" width="130" height="92" rx="15" fill="#4D3F8E"/>
+        <g class="screen"><rect x="54" y="44" width="96" height="76" rx="12" fill="url(#ps${u})" stroke="${OUT}" stroke-width="3"/>
+        ${face}${scan}
+        <path d="M62,52 Q70,47 80,49" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/></g>
+        <circle cx="163" cy="60" r="7" fill="#FFC93C" stroke="${OUT}" stroke-width="3"/>
+        <circle cx="163" cy="82" r="7" fill="#FF4F96" stroke="${OUT}" stroke-width="3"/>
+        <path d="M157,100 h12 M157,106 h12 M157,112 h12" stroke="${OUT}" stroke-width="2.6" stroke-linecap="round"/>
+      </g>
+      <g class="sparks" fill="#9DFFF5"><path d="M20,60 l3,7 7,3 -7,3 -3,7 -3,-7 -7,-3 7,-3 Z"/><path d="M196,170 l2.4,5.6 5.6,2.4 -5.6,2.4 -2.4,5.6 -2.4,-5.6 -5.6,-2.4 5.6,-2.4 Z"/></g>
+    </svg>`;
+  }
+
+  function kitsune() {
+    const tail = `<path d="M110,178 C92,170 84,140 92,110 C96,92 110,80 122,70 C118,92 132,112 128,136 C126,156 120,170 110,178 Z" fill="#FF8A2B" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+      <path d="M122,70 C118,84 120,94 124,102 C114,98 104,96 97,101 C104,88 112,78 122,70 Z" fill="#FFF4EA" stroke="${OUT}" stroke-width="3" stroke-linejoin="round"/>`;
+    const note = (x, y, c) => `<g transform="translate(${x} ${y})" fill="${c}" stroke="${OUT}" stroke-width="2.4" stroke-linejoin="round"><path d="M6,14 V-8 L20,-4 V3 L6,-1"/><ellipse cx="1" cy="14" rx="7" ry="5.4"/></g>`;
+    return `<svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <ellipse cx="110" cy="222" rx="60" ry="6" fill="#000" opacity=".28"/>
+      <g class="tails">
+        <g transform="translate(110 182) rotate(-64) scale(1.4) translate(-110 -178)">${tail}</g>
+        <g transform="translate(110 182) rotate(64) scale(1.4) translate(-110 -178)">${tail}</g>
+        <g transform="translate(110 182) rotate(28) scale(1.15) translate(-110 -178)">${tail}</g>
+      </g>
+      <g class="bob">
+        <path d="M64,80 L50,14 L100,50 Z" fill="#FF8A2B" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M68,70 L58,30 L92,52 Z" fill="#FF9EC4"/>
+        <path d="M50,14 L54,33 L64,25 Z" fill="#3A1E14"/>
+        <path d="M156,80 L170,14 L120,50 Z" fill="#FF8A2B" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M152,70 L162,30 L128,52 Z" fill="#FF9EC4"/>
+        <path d="M170,14 L166,33 L156,25 Z" fill="#3A1E14"/>
+        <path d="M58,96 C58,64 82,46 110,46 C138,46 162,64 162,96 C162,110 170,120 180,128 C164,134 152,152 110,170 C68,152 56,134 40,128 C50,120 58,110 58,96 Z" fill="#FF8A2B" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M44,128 C58,130 70,144 110,160 C150,144 162,130 176,128 C168,140 150,156 110,170 C70,156 52,140 44,128 Z" fill="#FFF4EA"/>
+        <path d="M86,120 C92,106 128,106 134,120 C132,140 124,152 110,160 C96,152 88,140 86,120 Z" fill="#FFF4EA"/>
+        <path d="M110,60 C102,70 104,80 110,88 C116,80 118,70 110,60 Z" fill="#E0314B"/>
+        <path d="M58,112 L73,115 M57,120 L71,120 M162,112 L147,115 M163,120 L149,120" stroke="#E0314B" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M70,98 Q86,84 101,98 Q86,105 70,98 Z" fill="#FFD23F" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M150,98 Q134,84 119,98 Q134,105 150,98 Z" fill="#FFD23F" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <ellipse cx="88" cy="96" rx="2.6" ry="5.6" fill="${OUT}"/><ellipse cx="132" cy="96" rx="2.6" ry="5.6" fill="${OUT}"/>
+        <circle cx="85" cy="93" r="1.6" fill="#fff"/><circle cx="129" cy="93" r="1.6" fill="#fff"/>
+        <path d="M69,97 L57,90 M151,97 L163,90" stroke="#E0314B" stroke-width="3.2" stroke-linecap="round"/>
+        <ellipse cx="110" cy="126" rx="6.4" ry="4.6" fill="${OUT}"/><ellipse cx="108" cy="124.6" rx="2" ry="1.2" fill="#fff" opacity=".7"/>
+        <path d="M97,138 Q104,145 110,138 Q117,145 125,135" stroke="${OUT}" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M117,140 l2.2,5.4 2.2,-6.2 Z" fill="#fff" stroke="${OUT}" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M56,98 C50,34 170,34 164,98" fill="none" stroke="${OUT}" stroke-width="13" stroke-linecap="round"/>
+        <path d="M56,98 C50,34 170,34 164,98" fill="none" stroke="#2EE6FF" stroke-width="5.5" stroke-linecap="round"/>
+        <rect x="40" y="82" width="27" height="46" rx="12" fill="#2A2350" stroke="${OUT}" stroke-width="3.6"/>
+        <rect x="46" y="90" width="9" height="30" rx="4.5" fill="#2EE6FF"/>
+        <rect x="153" y="82" width="27" height="46" rx="12" fill="#2A2350" stroke="${OUT}" stroke-width="3.6"/>
+        <rect x="165" y="90" width="9" height="30" rx="4.5" fill="#2EE6FF"/>
+      </g>
+      <g class="notes">${note(18, 44, '#FFC93C')}${note(186, 54, '#2EE6FF')}${note(194, 150, '#FF4F96')}</g>
+    </svg>`;
+  }
+
+  function oni() {
+    let fringe = '';
+    for (let x = 30; x < 190; x += 10) fringe += `L${x + 5},212 L${x + 10},222 `;
+    return `<svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <ellipse cx="110" cy="224" rx="70" ry="6" fill="#000" opacity=".28"/>
+      <g class="bob">
+        <path d="M30,222 C34,170 50,130 80,120 L140,120 C170,130 186,170 190,222 Z" fill="#B3123A" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M70,130 C66,160 64,190 66,220 M110,124 L110,220 M150,130 C154,160 156,190 154,220" stroke="#7E0A28" stroke-width="4" fill="none" stroke-linecap="round"/>
+        <path d="M30,222 ${fringe} L190,222 Z" fill="#FFC93C" stroke="${OUT}" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M50,110 L34,92 L52,86 L40,64 L62,66 L58,42 L80,52 L86,30 L102,46 L110,26 L118,46 L134,30 L140,52 L162,42 L158,66 L180,64 L168,86 L186,92 L170,110 Z" fill="#F4F1FF" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M80,58 C70,44 66,28 72,12 C82,24 92,36 96,50 Z" fill="#FFD15C" stroke="${OUT}" stroke-width="3.6" stroke-linejoin="round"/>
+        <path d="M140,58 C150,44 154,28 148,12 C138,24 128,36 124,50 Z" fill="#FFD15C" stroke="${OUT}" stroke-width="3.6" stroke-linejoin="round"/>
+        <path d="M73,30 L86,27 M147,30 L134,27" stroke="#C98E14" stroke-width="3" stroke-linecap="round"/>
+        <path d="M64,92 C64,60 86,44 110,44 C134,44 156,60 156,92 L156,116 C156,146 136,164 110,164 C84,164 64,146 64,116 Z" fill="#4D7CFF" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M140,56 C152,66 156,80 156,92 L156,116 C156,140 144,156 126,162 C140,148 146,128 146,108 C146,88 144,70 140,56 Z" fill="#3559D6"/>
+        <g transform="rotate(14 120 40)">
+          <rect x="100" y="12" width="38" height="30" rx="3" fill="${OUT}"/>
+          <rect x="100" y="32" width="38" height="6" fill="#E0314B"/>
+          <ellipse cx="119" cy="43" rx="29" ry="6" fill="${OUT}"/>
+        </g>
+        <path d="M72,86 L104,96 L102,89 L74,79 Z M148,86 L116,96 L118,89 L146,79 Z" fill="#F4F1FF" stroke="${OUT}" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M76,95 L102,101 L100,109 Q86,113 76,105 Z" fill="#FFE45C" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M144,95 L118,101 L120,109 Q134,113 144,105 Z" fill="#FFE45C" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <circle cx="90" cy="104" r="4.6" fill="${OUT}"/><circle cx="130" cy="104" r="4.6" fill="${OUT}"/>
+        <circle cx="88.4" cy="102.4" r="1.5" fill="#fff"/><circle cx="128.4" cy="102.4" r="1.5" fill="#fff"/>
+        <circle cx="105" cy="120" r="2.4" fill="${OUT}"/><circle cx="115" cy="120" r="2.4" fill="${OUT}"/>
+        <path d="M80,131 Q110,154 140,131 Q110,142 80,131 Z" fill="${OUT}" stroke="${OUT}" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M86,132 L90,120 L96,135 Z M134,132 L130,120 L124,135 Z" fill="#fff" stroke="${OUT}" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M70,120 h11 M139,120 h11" stroke="#FF8FC0" stroke-width="3.2" stroke-linecap="round"/>
+      </g>
+      <g class="juggle">
+        <circle class="j1" cx="30" cy="74" r="10" fill="#FF4F96" stroke="${OUT}" stroke-width="3"/>
+        <circle class="j2" cx="190" cy="70" r="10" fill="#FFC93C" stroke="${OUT}" stroke-width="3"/>
+        <circle class="j3" cx="26" cy="150" r="9" fill="#2EE6FF" stroke="${OUT}" stroke-width="3"/>
+      </g>
+    </svg>`;
+  }
+
+  function dragon() {
+    const u = uid();
+    let ball = '';
+    for (let i = -12; i <= 12; i += 6) ball += `<path d="M${196 + i},172 V204" stroke="${OUT}" stroke-width="1" opacity=".35"/><path d="M180,${188 + i} H212" stroke="${OUT}" stroke-width="1" opacity=".35"/>`;
+    return `<svg viewBox="0 0 240 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <defs><radialGradient id="db${u}" cx=".35" cy=".35" r=".8"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#C9D6FF"/><stop offset="1" stop-color="#6C7BB8"/></radialGradient></defs>
+      <path d="M14,0 L72,0 L120,210 Z M226,0 L168,0 L120,210 Z" fill="#FFF3B0" opacity=".13"/>
+      <circle class="halo" cx="120" cy="108" r="98" fill="none" stroke="var(--d2)" stroke-width="3" opacity=".55" stroke-dasharray="6 10"/>
+      <ellipse cx="120" cy="232" rx="70" ry="6" fill="#000" opacity=".3"/>
+      <g class="bob">
+        <path d="M48,150 L22,128 L46,120 L18,92 L48,90 L30,58 L62,66 L56,30 L86,48 L96,16 L112,42 L120,8 L128,42 L144,16 L154,48 L184,30 L178,66 L210,58 L192,90 L222,92 L194,120 L218,128 L192,150 L170,168 L70,168 Z" fill="var(--d2)" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M88,56 C78,40 74,24 80,6 C84,18 90,26 96,30 C94,20 96,12 102,6 C102,22 104,36 104,48 Z" fill="#FFF0C2" stroke="${OUT}" stroke-width="3.4" stroke-linejoin="round"/>
+        <path d="M152,56 C162,40 166,24 160,6 C156,18 150,26 144,30 C146,20 144,12 138,6 C138,22 136,36 136,48 Z" fill="#FFF0C2" stroke="${OUT}" stroke-width="3.4" stroke-linejoin="round"/>
+        <path class="whisk" d="M96,150 C70,152 52,170 30,166 C20,164 14,172 10,184" stroke="var(--d2)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path class="whisk2" d="M144,150 C170,152 188,170 210,166 C220,164 226,172 230,184" stroke="var(--d2)" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M66,98 C66,64 90,46 120,46 C150,46 174,64 174,98 C174,116 164,128 158,138 C154,160 142,176 120,178 C98,176 86,160 82,138 C76,128 66,116 66,98 Z" fill="var(--d1)" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M96,122 C100,110 140,110 144,122 C144,146 136,166 120,170 C104,166 96,146 96,122 Z" fill="var(--d1l)"/>
+        <path d="M104,70 q8,-8 16,0 q8,-8 16,0 M96,84 q8,-8 16,0 q8,-8 16,0 q8,-8 16,0" stroke="var(--d1s)" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M78,92 L108,98 L106,90 L82,82 Z M162,92 L132,98 L134,90 L158,82 Z" fill="var(--d1s)" stroke="${OUT}" stroke-width="2.6" stroke-linejoin="round"/>
+        <ellipse cx="95" cy="106" rx="16" ry="9" fill="var(--d3)" opacity=".35"/><ellipse cx="145" cy="106" rx="16" ry="9" fill="var(--d3)" opacity=".35"/>
+        <path d="M82,100 L108,104 Q100,115 86,110 Z" fill="var(--d3)" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M158,100 L132,104 Q140,115 154,110 Z" fill="var(--d3)" stroke="${OUT}" stroke-width="2.8" stroke-linejoin="round"/>
+        <ellipse cx="97" cy="106" rx="2.1" ry="4.8" fill="${OUT}"/><ellipse cx="143" cy="106" rx="2.1" ry="4.8" fill="${OUT}"/>
+        <ellipse cx="111" cy="155" rx="4.2" ry="2.8" fill="${OUT}"/><ellipse cx="129" cy="155" rx="4.2" ry="2.8" fill="${OUT}"/>
+        <path d="M98,165 Q120,176 142,165" stroke="${OUT}" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <path d="M104,168 l3,10 3,-9 Z M136,168 l-3,10 -3,-9 Z" fill="#fff" stroke="${OUT}" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M108,176 L114,200 L120,186 L126,200 L132,176 Z" fill="var(--d2)" stroke="${OUT}" stroke-width="3" stroke-linejoin="round"/>
+      </g>
+      <g class="disco"><path d="M196,154 V172" stroke="${OUT}" stroke-width="2.4"/><circle cx="196" cy="188" r="16" fill="url(#db${u})" stroke="${OUT}" stroke-width="3"/>${ball}<path d="M186,180 l3,-3" stroke="#fff" stroke-width="3" stroke-linecap="round"/></g>
+    </svg>`;
+  }
+
+  function lantern() {
+    let ribs = '';
+    for (let y = 70; y <= 166; y += 16) ribs += `<path d="M${y < 118 ? 58 + (118 - y) * 0.25 : 58 + (y - 118) * 0.25},${y} Q110,${y + 6} ${y < 118 ? 162 - (118 - y) * 0.25 : 162 - (y - 118) * 0.25},${y}" stroke="#B3123A" stroke-width="2" fill="none" opacity=".5"/>`;
+    return `<svg viewBox="0 0 220 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+      <ellipse cx="110" cy="222" rx="50" ry="6" fill="#000" opacity=".28"/>
+      <g class="bob">
+        <path d="M110,6 V40" stroke="${OUT}" stroke-width="4"/>
+        <circle cx="110" cy="10" r="7" fill="none" stroke="${OUT}" stroke-width="4"/>
+        <path d="M72,52 C38,80 38,156 72,184 L148,184 C182,156 182,80 148,52 Z" fill="#FF6B6B" stroke="${OUT}" stroke-width="4" stroke-linejoin="round"/>
+        <path d="M84,56 C62,84 62,152 84,180" stroke="#fff" stroke-width="5" fill="none" opacity=".35" stroke-linecap="round"/>
+        ${ribs}
+        <rect x="68" y="38" width="84" height="18" rx="5" fill="${OUT}"/>
+        <rect x="68" y="180" width="84" height="18" rx="5" fill="${OUT}"/>
+        <path d="M82,100 Q90,90 98,100 M122,100 Q130,90 138,100" stroke="${OUT}" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+        <path d="M94,122 Q110,142 126,122 Z" fill="${OUT}"/>
+        <path d="M103,131 Q110,138 117,131 Q110,128 103,131 Z" fill="#FF8FA3"/>
+        <ellipse cx="80" cy="116" rx="8" ry="4" fill="#FFB3C4" opacity=".8"/><ellipse cx="140" cy="116" rx="8" ry="4" fill="#FFB3C4" opacity=".8"/>
+        <path d="M100,198 l4,18 M110,198 v20 M120,198 l-4,18" stroke="#FFC93C" stroke-width="3" stroke-linecap="round"/>
+      </g>
+    </svg>`;
+  }
+
+  const ENEMY = { phantom, kitsune, oni, dragon, lantern };
+
+  /* ---------------- Scenes (background strips) ---------------- */
+  function scene(key) {
+    const svg = (inner) => `<svg class="scene-svg" viewBox="0 0 400 220" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">${inner}</svg>`;
+    if (key === 'city') {
+      const b = [[0, 120, 40], [38, 90, 34], [70, 140, 30], [98, 70, 44], [140, 110, 36], [174, 60, 30], [202, 100, 50], [250, 80, 34], [282, 130, 40], [320, 76, 36], [354, 112, 46]];
+      let s = '<circle cx="330" cy="46" r="20" fill="#FFF3C4" opacity=".9"/><circle cx="322" cy="40" r="20" fill="#2A1D62" opacity=".55"/>';
+      b.forEach(([x, top, w], i) => {
+        s += `<rect x="${x}" y="${top}" width="${w}" height="${220 - top}" fill="${i % 2 ? '#1A1240' : '#221852'}"/>`;
+        for (let y = top + 10; y < 210; y += 14) for (let wx = x + 6; wx < x + w - 6; wx += 10) if ((wx * 7 + y * 3 + i) % 5 < 2) s += `<rect x="${wx}" y="${y}" width="5" height="6" fill="${(wx + y) % 3 ? '#FFD86B' : '#5CF0FF'}" opacity=".85"/>`;
+      });
+      s += '<rect x="104" y="58" width="32" height="14" rx="3" fill="none" stroke="#FF4F96" stroke-width="2.4"/><path d="M114,68 V61 L124,59 V66" stroke="#FF4F96" stroke-width="2" fill="none"/>';
+      return svg(s);
+    }
+    if (key === 'sunset') {
+      let s = '<circle cx="200" cy="150" r="90" fill="#FFD25A" opacity=".9"/>';
+      for (let i = 0; i < 6; i++) s += `<rect x="100" y="${126 + i * 12}" width="200" height="${3 + i}" fill="#FF6A55"/>`;
+      s += '<path d="M0,170 C80,150 140,176 200,164 C260,152 320,174 400,160 L400,220 L0,220 Z" fill="#3B1856"/>';
+      for (let i = 0; i < 20; i++) { const h = 14 + ((i * 37) % 46); s += `<rect class="eq" style="animation-delay:${(i % 7) * -0.17}s" x="${8 + i * 20}" y="${220 - h}" width="12" height="${h}" rx="2" fill="${i % 3 === 0 ? '#2EE6FF' : i % 3 === 1 ? '#FF4F96' : '#FFC93C'}" opacity=".85"/>`; }
+      return svg(s);
+    }
+    if (key === 'circus') {
+      let s = '';
+      for (let i = 0; i < 11; i++) s += `<path d="M${i * 40 - 20},0 L${i * 40 + 20},0 L${i * 40},22 Z" fill="${i % 2 ? '#FFC93C' : '#FF4F96'}" stroke="#1B1035" stroke-width="1.6"/>`;
+      s += '<path d="M0,0 C30,40 40,120 0,220 Z M400,0 C370,40 360,120 400,220 Z" fill="#9C1034" opacity=".92"/>';
+      for (let i = 0; i < 10; i++) s += `<path d="M${i * 44 - 8},220 L${i * 44 + 14},150 L${i * 44 + 36},220 Z" fill="${i % 2 ? '#F4F1FF' : '#D7193F'}" opacity=".9"/>`;
+      return svg(s);
+    }
+    if (key === 'stage') {
+      let s = '<path d="M60,0 L110,0 L200,190 Z M340,0 L290,0 L200,190 Z" fill="#FFF3B0" opacity=".1"/>';
+      s += '<path d="M0,170 L400,170 L400,220 L0,220 Z" fill="#2A0712"/><path d="M0,170 L400,170" stroke="#FFC93C" stroke-width="2" opacity=".6"/>';
+      for (let i = 0; i < 9; i++) s += `<path d="M${i * 50},220 L${200 + (i * 50 - 200) * 0.5},170" stroke="#FFC93C" stroke-width="1" opacity=".22"/>`;
+      s += '<rect x="10" y="120" width="40" height="52" rx="4" fill="#160309" stroke="#3A0C1C" stroke-width="2"/><circle cx="30" cy="140" r="11" fill="#2A0712" stroke="#4A1426" stroke-width="2"/>';
+      s += '<rect x="350" y="120" width="40" height="52" rx="4" fill="#160309" stroke="#3A0C1C" stroke-width="2"/><circle cx="370" cy="140" r="11" fill="#2A0712" stroke="#4A1426" stroke-width="2"/>';
+      return svg(s);
+    }
+    // dojo
+    let s = '<path d="M0,176 L400,176 L400,220 L0,220 Z" fill="#2B3A2A"/>';
+    for (let i = 0; i < 8; i++) s += `<path d="M${i * 56},176 L${i * 56 - 20},220" stroke="#4D6A47" stroke-width="2"/>`;
+    [[60, 30], [340, 40]].forEach(([x, y]) => { s += `<path d="M${x},0 V${y}" stroke="#1B1035" stroke-width="2"/><ellipse cx="${x}" cy="${y + 18}" rx="14" ry="18" fill="#FF6B6B" opacity=".9"/>`; });
+    return svg(s);
+  }
+
+  /* ---------------- Icons ---------------- */
+  const P = (d, extra) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="${d}" ${extra || 'fill="currentColor"'}/></svg>`;
+  const ICON = {
+    heart: P('M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.2 4.3 2.4.8-1.2 2.2-2.4 4.3-2.4C19 4.5 21.1 8.4 19.6 11.8 17.5 16.4 12 21 12 21Z'),
+    heartBroken: P('M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.5 1.2 4.3 2.4l-1.5 3.4 2.6 1.6-1.7 3.6 3.6-4.2-2.4-1.7 1.6-2.7c.8-.5 1.6-.4 2.1-.4C19 4.5 21.1 8.4 19.6 11.8 17.5 16.4 12 21 12 21Z'),
+    book: P('M12 6.5C10.3 5 7.6 4.5 3 4.8V18.2c4.6-.3 7.3.2 9 1.7 1.7-1.5 4.4-2 9-1.7V4.8c-4.6-.3-7.3.2-9 1.7Zm-1 11C9.4 16.6 7.3 16.2 5 16.3V6.6c2.6 0 4.6.5 6 1.5v9.4Zm8-1.2c-2.3-.1-4.4.3-6 1.2V8.1c1.4-1 3.4-1.5 6-1.5v9.7Z'),
+    ear: P('M12 3a7 7 0 0 0-7 7v3.5A3.5 3.5 0 0 0 8.5 17H10v-6H7v-1a5 5 0 0 1 10 0v1h-3v6h1.5a3.5 3.5 0 0 0 1.6-.4C16.7 19 15 20.5 12.5 21l.4 1.9c4.1-.9 7.1-4.5 7.1-8.9V10a7 7 0 0 0-8-7Z'),
+    pencil: P('M3 17.3V21h3.7L17.8 9.9l-3.7-3.7L3 17.3ZM20.7 7a1 1 0 0 0 0-1.4l-2.3-2.3a1 1 0 0 0-1.4 0l-1.8 1.8 3.7 3.7L20.7 7Z'),
+    play: P('M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z'),
+    slow: P('M4 14c0-3.9 3.6-7 8-7s8 3.1 8 7v1H4v-1Zm-2 2h3l-1 3H2v-3Zm17 0h3v3h-2l-1-3ZM20.5 9.5a2 2 0 1 1 1.8 2.9L20 11Z'),
+    pause: P('M6 4h4v16H6V4Zm8 0h4v16h-4V4Z'),
+    soundOn: P('M4 9v6h4l5 4V5L8 9H4Zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4ZM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z'),
+    soundOff: P('M4 9v6h4l5 4V5L8 9H4Zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4-2.7-2.7Z'),
+    check: P('M9.5 16.2 5.3 12l-1.8 1.8 6 6 11-11-1.8-1.8-9.2 9.2Z'),
+    cross: P('M18.3 5.7 12 12l6.3 6.3-1.4 1.4L10.6 13.4 4.3 19.7 2.9 18.3 9.2 12 2.9 5.7l1.4-1.4 6.3 6.3 6.3-6.3 1.4 1.4Z'),
+    bolt: P('M13 2 4 14h6l-1 8 9-12h-6l1-8Z'),
+    star: P('M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9L12 2.5Z'),
+    back: P('M15.4 4.6 8 12l7.4 7.4 1.4-1.4-6-6 6-6-1.4-1.4Z'),
+    replay: P('M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7Z'),
+    info: P('M11 7h2v2h-2V7Zm0 4h2v6h-2v-6Zm1-9a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z'),
+    tick: '<svg class="mark" viewBox="0 0 24 24" aria-label="yes" role="img"><circle cx="12" cy="12" r="11" fill="#0B8A55"/><path d="M7 12.5l3.2 3.2L17.5 8.5" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    crossMark: '<svg class="mark" viewBox="0 0 24 24" aria-label="no" role="img"><circle cx="12" cy="12" r="11" fill="#C8102E"/><path d="M8 8l8 8M16 8l-8 8" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>'
+  };
+
+  return { HEROES, hero, ENEMY, scene, ICON };
+})();
+
+/* ============================================================
+   BOSS BATTLE — game engine
+   ============================================================ */
+(function () {
+  'use strict';
+  const $ = (s, r) => (r || document).querySelector(s);
+  const $$ = (s, r) => [...(r || document).querySelectorAll(s)];
+  const ICON = ART.ICON;
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const fmt = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>')
+    .replace(/\[Y\]/g, ICON.tick).replace(/\[N\]/g, ICON.crossMark);
+  const plain = (s) => String(s || '').replace(/\*\*/g, '').replace(/\[Y\]/g, '✓').replace(/\[N\]/g, '✗');
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem('bossbattle_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem('bossbattle_' + k, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }
+  };
+  let kbd = false;
+  document.addEventListener('keydown', () => { kbd = true; }, true);
+  document.addEventListener('pointerdown', () => { kbd = false; }, true);
+  const coarse = () => window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  function autoFocus(el, isInput) { if (!el) return; if ((isInput && !coarse()) || kbd) setTimeout(() => el.focus({ preventScroll: true }), 60); }
+  const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------------- Sound effects (WebAudio, no files) ---------------- */
+  const Sfx = {
+    ctx: null, on: store.get('sound', true),
+    init() { if (this.ctx || !this.on) return; try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { this.ctx = null; } },
+    tone(f, d, type, delay, vol, slide) {
+      if (!this.on) return; this.init(); const c = this.ctx; if (!c) return;
+      try {
+        if (c.state === 'suspended') c.resume();
+        const t = c.currentTime + (delay || 0); const o = c.createOscillator(); const g = c.createGain();
+        o.type = type || 'square'; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
+        g.gain.setValueAtTime(vol || 0.06, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + d + 0.02);
+      } catch (e) { /* ignore */ }
+    },
+    hit() { this.tone(520, 0.08, 'square', 0, 0.05); this.tone(780, 0.12, 'square', 0.06, 0.05); },
+    special() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.12, 'square', i * 0.06, 0.05)); },
+    miss() { this.tone(220, 0.25, 'sawtooth', 0, 0.05, 90); },
+    heal() { [660, 880, 990].forEach((f, i) => this.tone(f, 0.1, 'triangle', i * 0.07, 0.07)); },
+    win() { [523, 523, 659, 784, 1046].forEach((f, i) => this.tone(f, 0.16, 'square', i * 0.11, 0.05)); },
+    ko() { [392, 330, 262, 196].forEach((f, i) => this.tone(f, 0.22, 'triangle', i * 0.15, 0.07)); },
+    click() { this.tone(900, 0.04, 'square', 0, 0.03); }
+  };
+
+  /* ---------------- Speech (listening challenges) ---------------- */
+  const Speech = {
+    ok: !!(window.speechSynthesis && window.SpeechSynthesisUtterance),
+    voices: [],
+    load() {
+      if (!this.ok) return;
+      const get = () => {
+        let all = []; try { all = window.speechSynthesis.getVoices() || []; } catch (e) { all = []; }
+        const en = all.filter((v) => /^en[-_]/i.test(v.lang));
+        const gb = en.filter((v) => /GB/i.test(v.lang));
+        this.voices = gb.concat(en.filter((v) => !/GB/i.test(v.lang)));
+      };
+      get();
+      try { window.speechSynthesis.addEventListener('voiceschanged', get); } catch (e) { window.speechSynthesis.onvoiceschanged = get; }
+    },
+    stop() { if (this.ok) try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } },
+    speak(lines, slow, onend) {
+      if (!this.ok) return false;
+      const arr = Array.isArray(lines) ? lines : [lines];
+      try {
+        const ss = window.speechSynthesis; ss.cancel(); if (ss.paused) ss.resume();
+        const v1 = this.voices[0] || null;
+        const v2 = this.voices.find((v) => v1 && v.name !== v1.name) || v1;
+        arr.forEach((t, i) => {
+          const u = new SpeechSynthesisUtterance(t);
+          const second = arr.length > 1 && i % 2 === 1;
+          const v = second ? v2 : v1;
+          if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+          u.rate = slow ? 0.62 : 0.9;
+          u.pitch = second ? (v2 === v1 ? 1.45 : 1.1) : 1;
+          if (i === arr.length - 1 && onend) { u.onend = onend; u.onerror = onend; }
+          ss.speak(u);
+        });
+        return true;
+      } catch (e) { return false; }
+    }
+  };
+  Speech.load();
+
+  /* ---------------- State ---------------- */
+  const S = {
+    run: 'adventure', mode: 'battle', li: 0, level: null, hp: 0, hearts: 3, score: 0, startScore: 0,
+    streak: 0, bestStreak: 0, phase: 0, deck: null, q: null, answered: false, qNum: 0,
+    log: [], cleared: [], fixed: new Set(), dojo: null,
+    heroKey: store.get('hero', 'blaze'), name: store.get('name', ''),
+    pending: null, returnTo: 'scr-title', listened: false, opts: [], tiles: [], built: [], quitArm: false
+  };
+  const hero = () => ART.HEROES.find((h) => h.key === S.heroKey) || ART.HEROES[0];
+  const heroName = () => (S.name || '').trim() || hero().name;
+
+  /* ---------------- Screens ---------------- */
+  function show(id) {
+    $$('.screen').forEach((s) => { s.hidden = s.id !== id; });
+    const sc = $('#' + id); if (sc) sc.scrollTop = 0;
+    if (id !== 'scr-battle') Speech.stop();
+    autoFocus(sc && sc.querySelector('[data-focus]'));
+  }
+  function soundLabel() { return Sfx.on ? `${ICON.soundOn}<span class="sr">Sound effects on</span>` : `${ICON.soundOff}<span class="sr">Sound effects off</span>`; }
+  function toggleSound() { Sfx.on = !Sfx.on; store.set('sound', Sfx.on); $$('[data-sound]').forEach((b) => { b.innerHTML = soundLabel(); b.setAttribute('aria-label', Sfx.on ? 'Sound effects on' : 'Sound effects off'); }); if (Sfx.on) Sfx.click(); }
+
+  function renderTitle() {
+    const best = store.get('best', 0);
+    $('#scr-title').innerHTML = `
+      <div class="title-wrap">
+        <div class="title-art">
+          <div class="burst-bg"></div>
+          <div class="dragon-bg">${ART.ENEMY.dragon()}</div>
+          <div class="logo">
+            <div class="kana" aria-hidden="true">ボス・バトル</div>
+            <h1 id="game-title" class="display outline-text">BOSS<br>BATTLE</h1>
+          </div>
+          <div class="lineup">${ART.HEROES.map((h) => ART.hero(h)).join('')}</div>
+        </div>
+        <div class="title-side">
+          <ul class="tagline" aria-label="What you practise">
+            <li>Have you ever…?</li><li>Past participles</li><li>Shows &amp; music</li><li>Read · Listen · Write</li>
+          </ul>
+          <div class="howbox">
+            <h2>How to win</h2>
+            <ul>
+              <li><span class="c-good">${ICON.bolt}</span><span>Answer correctly and your hero attacks. The enemy loses energy.</span></li>
+              <li><span class="c-bad">${ICON.heart}</span><span>A wrong answer costs one heart. You have 3 hearts in each battle.</span></li>
+              <li><span class="c-star">${ICON.star}</span><span>3 right in a row = Special Move. 5 in a row = a heart comes back.</span></li>
+              <li><span>${ICON.ear}</span><span>Beat 4 enemies. The last one is the boss!</span></li>
+            </ul>
+          </div>
+          <div class="menu">
+            <button class="btn primary" id="btnStart" data-focus type="button">${ICON.play} Start adventure</button>
+            <div class="row">
+              <button class="btn" id="btnHow" type="button">How to play</button>
+              <button class="btn" id="btnSelect" type="button">Choose a battle</button>
+            </div>
+            <button class="btn ghost" id="btnGuide" type="button">${ICON.info} Teacher's guide (español)</button>
+          </div>
+          <p class="best">${best ? `Best score on this device: ${best}` : 'No time limits. Take your time and read the explanations.'}</p>
+        </div>
+      </div>
+      <button class="icon-btn title-top" data-sound type="button" aria-label="${Sfx.on ? 'Sound effects on' : 'Sound effects off'}">${soundLabel()}</button>`;
+    $('#btnStart').onclick = () => { S.pending = { run: 'adventure' }; renderHero(); show('scr-hero'); };
+    $('#btnHow').onclick = () => { S.returnTo = 'scr-title'; renderHowto(); show('scr-howto'); };
+    $('#btnSelect').onclick = () => { renderSelect(); show('scr-select'); };
+    $('#btnGuide').onclick = () => { show('scr-guide'); };
+    $('#scr-title [data-sound]').onclick = toggleSound;
+  }
+
+  function backBtn(id, label) { return `<button class="icon-btn" id="${id}" type="button" aria-label="${esc(label)}">${ICON.back}</button>`; }
+
+  function renderHero() {
+    $('#scr-hero').innerHTML = `
+      <div class="page">
+        <div class="page-head">${backBtn('heroBack', 'Back to title')}<div><div class="eyebrow">Step 1</div><h1 id="hero-h" class="display">Choose your hero</h1></div></div>
+        <div class="hero-grid" role="group" aria-label="Heroes">
+          ${ART.HEROES.map((h) => `<button class="hero-card" type="button" data-hero="${h.key}" aria-pressed="${h.key === S.heroKey}">${ART.hero(h)}<b>${h.name}</b><small>${h.element} power</small></button>`).join('')}
+        </div>
+        <div class="panel name-row">
+          <label for="heroName">Your name (optional). It appears on your Battle Report.</label>
+          <input class="text-in" id="heroName" type="text" maxlength="24" autocomplete="off" placeholder="Write your name" value="${esc(S.name)}">
+        </div>
+        <div class="actions"><button class="btn primary" id="heroGo" type="button" data-focus>${ICON.bolt} Let's battle!</button></div>
+      </div>`;
+    $$('.hero-card').forEach((b) => b.onclick = () => {
+      S.heroKey = b.dataset.hero; store.set('hero', S.heroKey); Sfx.click();
+      $$('.hero-card').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+    });
+    $('#heroBack').onclick = () => show('scr-title');
+    $('#heroGo').onclick = () => {
+      S.name = $('#heroName').value.trim().slice(0, 24); store.set('name', S.name);
+      const p = S.pending || { run: 'adventure' };
+      if (p.run === 'single') startSingle(p.li); else startAdventure();
+    };
+    $('#heroName').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('#heroGo').click(); } });
+  }
+
+  function renderSelect() {
+    $('#scr-select').innerHTML = `
+      <div class="page">
+        <div class="page-head">${backBtn('selBack', 'Back to title')}<div><div class="eyebrow">Practise one part</div><h1 id="select-h" class="display">Choose a battle</h1></div></div>
+        <div class="lvl-grid">
+          ${LEVELS.map((lv, i) => `<button class="lvl-card" type="button" data-li="${i}">
+            <span class="thumb">${ART.ENEMY[lv.key]()}</span>
+            <span><span class="num">${lv.boss ? 'Battle 4 · Boss' : 'Battle ' + lv.n}</span><b>${esc(lv.name)}</b><span>${esc(lv.topic)}</span><span class="energy">Energy ${lv.hp}</span></span>
+          </button>`).join('')}
+        </div>
+      </div>`;
+    $('#selBack').onclick = () => show('scr-title');
+    $$('.lvl-card').forEach((b) => b.onclick = () => { S.pending = { run: 'single', li: +b.dataset.li }; renderHero(); show('scr-hero'); });
+  }
+
+  /* ---------------- How to play (students) ---------------- */
+  function renderHowto() {
+    const back = S.returnTo === 'scr-battle' ? 'Back to the battle' : 'Back to title';
+    $('#scr-howto').innerHTML = `
+      <div class="page">
+        <div class="page-head">${backBtn('howBack', back)}<div><div class="eyebrow">Tutorial</div><h1 id="howto-h" class="display">How to play</h1></div></div>
+        <div class="steps">
+          <div class="panel step"><div class="badge">${ICON.bolt}</div><div><h3>1. Answer to attack</h3><p>A correct answer = your hero attacks. The enemy loses energy. When its energy bar is empty, you win the battle.</p><p class="es" lang="es">Respuesta correcta = atacas y el enemigo pierde energía.</p></div></div>
+          <div class="panel step"><div class="badge" style="background:#FF8FA3">${ICON.heart}</div><div><h3>2. Look after your hearts</h3><p>A wrong answer = you lose one heart. Read the explanation, then press Next. You have 3 hearts in every battle.</p><p class="es" lang="es">Respuesta incorrecta = pierdes un corazón. Lee por qué y sigue.</p></div></div>
+          <div class="panel step"><div class="badge" style="background:var(--sky)">${ICON.star}</div><div><h3>3. Special moves</h3><p>3 correct answers in a row = Special Move (more damage, more points). 5 in a row = you get a heart back.</p><p class="es" lang="es">3 seguidas = ataque especial. 5 seguidas = recuperas un corazón.</p></div></div>
+          <div class="panel step"><div class="badge" style="background:#B8F5C9">${ICON.ear}</div><div><h3>4. Read, listen and write</h3><p><b>Read</b> a short text. <b>Listen</b>: press Listen as many times as you want, or Slow. <b>Write</b>: type the word, or tap words to build a sentence.</p><p class="es" lang="es">Puedes escuchar las veces que quieras. "Slow" = más lento.</p><div class="chipset"><span class="chip r">${ICON.book} Reading</span><span class="chip l">${ICON.ear} Listening</span><span class="chip w">${ICON.pencil} Writing</span></div></div></div>
+          <div class="panel step"><div class="badge" style="background:#FFB3C4">${ICON.pause}</div><div><h3>5. Pause and keys</h3><p>Press the pause button (or P) to stop, restart or change the sound. On a computer you can use the keys 1, 2, 3, 4 and Enter.</p><p class="es" lang="es">Pausa con el botón o la tecla P. No hay límite de tiempo.</p></div></div>
+          <div class="panel step"><div class="badge" style="background:var(--volt)">${ICON.replay}</div><div><h3>6. Your Battle Report</h3><p>At the end you see your score and your mistakes with the rule. Press <b>Practise my mistakes</b> to train only those questions.</p><p class="es" lang="es">Al final ves tu reporte y puedes practicar solo tus errores.</p></div></div>
+        </div>
+        <div class="panel">
+          <div class="eyebrow" style="color:var(--ink-2)">Try it! (no hearts lost)</div>
+          <div id="practice" style="margin-top:10px"></div>
+        </div>
+        <div class="actions"><button class="btn primary" id="howGo" type="button">${S.returnTo === 'scr-battle' ? 'Back to the battle' : "I'm ready!"}</button></div>
+      </div>`;
+    const done = () => {
+      if (S.returnTo === 'scr-battle') { show('scr-battle'); openPause(); } else { S.pending = { run: 'adventure' }; renderHero(); show('scr-hero'); }
+    };
+    $('#howBack').onclick = () => { if (S.returnTo === 'scr-battle') { show('scr-battle'); openPause(); } else show('scr-title'); };
+    $('#howGo').onclick = done;
+    // Practice question
+    const q = PRACTICE_Q; const box = $('#practice');
+    const opts = shuffle(q.o.map((o, i) => ({ text: Array.isArray(o) ? o[0] : o, why: Array.isArray(o) ? o[1] : '', correct: i === 0 })));
+    box.innerHTML = `<h2 class="qprompt">${fmt(q.p)}</h2><div class="opts two" style="margin-top:12px">${opts.map((o, i) => `<button class="opt" type="button" data-i="${i}"><span class="k">${i + 1}</span><span class="t">${esc(o.text)}</span></button>`).join('')}</div><div id="practiceFb" style="margin-top:12px"></div>`;
+    $$('.opt', box).forEach((b) => b.onclick = () => {
+      const o = opts[+b.dataset.i];
+      $$('.opt', box).forEach((x, j) => { x.disabled = true; x.classList.add(opts[j].correct ? 'ok' : (x === b ? 'no' : 'dim')); });
+      $('#practiceFb').innerHTML = `<div class="fb ${o.correct ? 'ok' : 'no'}"><div class="fb-head">${o.correct ? ICON.check + ' HIT! In the game, the enemy loses energy.' : ICON.cross + ' OUCH! In the game, you lose a heart.'}</div><div class="fb-body">${o.correct ? '' : `<p class="fb-why">${fmt(o.why)}</p>`}<p class="fb-rule"><span class="tag">Rule</span><span>${fmt(q.rule)}</span></p><button class="btn small" type="button" id="practiceAgain">${ICON.replay} Try the example again</button></div></div>`;
+      o.correct ? Sfx.hit() : Sfx.miss();
+      $('#practiceAgain').onclick = () => renderHowto();
+    });
+  }
+
+  /* ---------------- Teacher's guide (Spanish) ---------------- */
+  function renderGuide() {
+    const reg = VERBS.regular.map((v) => `<tr><td>${v[0]}</td><td><b>${v[1]}</b></td><td>${esc(v[2])}</td></tr>`).join('');
+    const irr = VERBS.irregular.map((v) => `<tr><td>${v[0]}</td><td>${v[1]}</td><td><b>${v[2]}</b></td></tr>`).join('');
+    const voc = (list) => list.map((v) => `<tr><td><b>${v[0]}</b></td><td>${v[1]}</td></tr>`).join('');
+    const counts = LEVELS.map((lv) => QUESTIONS.filter((q) => q.lv === lv.n).length);
+    $('#scr-guide').innerHTML = `
+      <div class="page">
+        <div class="page-head">${backBtn('guideBack', 'Volver al inicio')}<div><div class="eyebrow">Para la profesora</div><h1 id="guide-h" class="display">Guía docente</h1></div></div>
+        <div class="panel guide" lang="es">
+          <nav class="toc" aria-label="Secciones"><a href="#g-start">Cómo empezar</a><a href="#g-map">Los 4 combates</a><a href="#g-rules">Reglas</a><a href="#g-class">En clase</a><a href="#g-content">Contenido</a><a href="#g-errors">Errores</a><a href="#g-audio">Audio</a></nav>
+          <h2 id="g-start" style="margin-top:16px">Cómo empezar (paso a paso)</h2>
+          <ol>
+            <li>Abra el enlace en el computador, la tablet o el teléfono. No requiere cuenta ni instalación.</li>
+            <li><b>Start adventure</b> juega los 4 combates seguidos (≈ 25–35 min). <b>Choose a battle</b> juega uno solo: útil como diagnóstico de 5–8 minutos o para estaciones.</li>
+            <li>El alumno elige uno de cuatro héroes y escribe su nombre (opcional). Ambos quedan guardados en ese dispositivo.</li>
+            <li>Cada pregunta indica la habilidad (Reading, Listening, Writing) y el tema. Al responder aparece de inmediato si es correcta, la explicación del error específico, la respuesta correcta y la regla.</li>
+            <li>Al final, el <b>Battle Report</b> muestra puntaje, precisión por habilidad y por tema, y cada error con su regla. <b>Practise my mistakes</b> abre un "dojo" solo con esas preguntas, sin perder corazones; una pregunta fallada vuelve a aparecer (hasta tres veces).</li>
+            <li>El botón de pausa (o la tecla P) permite reanudar, reiniciar el combate, ver el tutorial, activar o silenciar efectos y terminar para ver el reporte.</li>
+          </ol>
+          <h2 id="g-map">Los cuatro combates</h2>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Combate</th><th>Enemigo</th><th>Energía</th><th>Contenido</th><th>Banco</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Pixel Phantom</td><td>900</td><td>Vocabulario de espectáculos y música · participios regulares y su ortografía (+d, y → ied, doble consonante)</td><td>${counts[0]} preguntas</td></tr>
+              <tr><td>2</td><td>DJ Kitsune</td><td>1200</td><td>Géneros musicales · participios irregulares (incluye <i>gone</i> vs <i>been</i> y la pronunciación de <i>read</i>)</td><td>${counts[1]} preguntas</td></tr>
+              <tr><td>3</td><td>Curtain Oni</td><td>1500</td><td><i>Have / Has … ever …?</i> · respuestas cortas · <i>ever / never</i> · <i>been to</i> · has/have con <i>your parents</i></td><td>${counts[2]} preguntas</td></tr>
+              <tr><td>4 (jefe)</td><td>Encore Dragon</td><td>2100</td><td>Todo mezclado, en tres fases: <b>Sound Spell</b> (escucha), <b>Scroll Curse</b> (lectura) y <b>Final Form</b> (escritura de preguntas y oraciones completas)</td><td>${counts[3]} preguntas</td></tr>
+            </tbody></table></div>
+          <p>En los combates 1 a 3 las preguntas rotan entre lectura, escucha y escritura, así que cada alumno practica las tres habilidades. El orden de las preguntas y de las alternativas cambia en cada partida.</p>
+          <h2 id="g-rules">Reglas del juego</h2>
+          <ul>
+            <li>Respuesta correcta: 100 de daño y 100 puntos. Con 3 o más seguidas, <b>Special Move</b>: 150 de daño y 50 puntos extra.</li>
+            <li>Respuesta incorrecta: se pierde 1 corazón. La respuesta correcta solo se muestra después del intento, junto con la explicación.</li>
+            <li>3 corazones por combate. Con 5 correctas seguidas se recupera uno.</li>
+            <li>Si se acaban los corazones (K.O.), el alumno repite ese combate con preguntas nuevas, sin volver al inicio del juego.</li>
+            <li>Al ganar un combate: 100 puntos por corazón restante; derrotar al jefe da 500 extra.</li>
+            <li>Sin límite de tiempo en ninguna parte.</li>
+          </ul>
+          <h2 id="g-class">Cinco formas de usarlo en clase</h2>
+          <ol>
+            <li><b>Diagnóstico al proyector (5–8 min).</b> Choose a battle → Batalla 1. La clase vota con los dedos (1–4) antes de que usted toque la respuesta. Si la mitad se equivoca, explique la regla que aparece en pantalla.</li>
+            <li><b>Equipos frente al proyector.</b> Cuatro equipos; cada pregunta la responde un equipo distinto. Cuando un equipo falla, el siguiente debe explicar por qué antes de continuar.</li>
+            <li><b>Parejas con tablets.</b> Uno controla y el otro decide; cambian de rol con cada enemigo. Pida que lean la explicación en voz alta cuando pierdan un corazón.</li>
+            <li><b>Estaciones.</b> Cuatro estaciones, una por combate (Choose a battle). Los grupos rotan cada 8 minutos.</li>
+            <li><b>Tarea y cierre.</b> El alumno juega en casa, saca una foto del Battle Report y la trae. En la clase siguiente usa <b>Practise my mistakes</b> o usted agrupa por la barra más baja del reporte.</li>
+          </ol>
+          <h2 id="g-content">Contenido</h2>
+          <h3>Vocabulario: espectáculos</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>Palabra</th><th>Definición usada en el juego</th></tr></thead><tbody>${voc(VOCAB.shows)}</tbody></table></div>
+          <h3>Vocabulario: géneros musicales</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>Palabra</th><th>Definición usada en el juego</th></tr></thead><tbody>${voc(VOCAB.music)}</tbody></table></div>
+          <h3>Verbos regulares (15)</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>Verbo</th><th>Participio</th><th>Regla</th></tr></thead><tbody>${reg}</tbody></table></div>
+          <p>Reglas de ortografía que el juego explica: terminado en -e → +d (<span class="ex">liked</span>); consonante + y → ied (<span class="ex">tried</span>), pero vocal + y → +ed (<span class="ex">played</span>); una vocal + una consonante → doble consonante (<span class="ex">stopped</span>); <i>learned</i> y <i>learnt</i> se aceptan ambos (inglés británico).</p>
+          <h3>Verbos irregulares (16)</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>Verbo</th><th>Pasado</th><th>Participio</th></tr></thead><tbody>${irr}</tbody></table></div>
+          <h3>Gramática</h3>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Forma</th><th>Ejemplo</th></tr></thead>
+            <tbody>
+              <tr><td>Pregunta (I / you / we / they)</td><td><span class="ex">Have you ever been to a concert?</span></td></tr>
+              <tr><td>Pregunta (he / she / it)</td><td><span class="ex">Has your sister ever seen a play?</span></td></tr>
+              <tr><td>Respuestas cortas</td><td><span class="ex">Yes, I have. / No, I haven't.</span> · <span class="ex">Yes, he has. / No, he hasn't.</span></td></tr>
+              <tr><td>Negativa con never</td><td><span class="ex">I've never eaten sushi.</span></td></tr>
+              <tr><td>been vs gone</td><td><span class="ex">Sara has been to the circus</span> (fue y volvió) · <span class="ex">Tom has gone to the circus</span> (fue y sigue allá)</td></tr>
+            </tbody></table></div>
+          <h2 id="g-errors">Errores frecuentes que el juego detecta y explica</h2>
+          <ul>
+            <li>Pasado simple en vez de participio: <span class="err">Have you ever went…?</span> → <span class="ex">been</span>; <span class="err">has drank</span> → <span class="ex">drunk</span>.</li>
+            <li>Regularizar irregulares: <span class="err">eated</span>, <span class="err">drinked</span>, <span class="err">writed</span>, <span class="err">runned</span>.</li>
+            <li>Ortografía de regulares: <span class="err">stoped</span>, <span class="err">tryed</span>, <span class="err">plaied</span>, <span class="err">startted</span>.</li>
+            <li>Has / have con sujetos plurales: <span class="err">Has your parents…?</span> y con <i>you</i>: <span class="err">Has you…?</span></li>
+            <li>Contracción en respuesta corta afirmativa: <span class="err">Yes, I've.</span> → <span class="ex">Yes, I have.</span></li>
+            <li>Doble negación: <span class="err">No, he hasn't never.</span>; <i>ever</i> en negativas en vez de <i>never</i>.</li>
+            <li>Vocabulario que se confunde: <i>opera</i> vs <i>soap opera</i>; <i>concert</i> vs <i>comedy</i> vs <i>cartoon</i> (escucha).</li>
+            <li><i>read</i>: misma escritura en las tres formas, pero el participio se pronuncia /red/ (pregunta de escucha en el combate 2).</li>
+          </ul>
+          <p>En las preguntas de escritura no se acepta faltas de ortografía en el participio, porque es justamente lo que se practica. Sí se aceptan mayúsculas o minúsculas, puntos finales y contracciones sin apóstrofo (<i>havent</i>, <i>Ive</i>).</p>
+          <h2 id="g-audio">Audio (Listening)</h2>
+          <ul>
+            <li>El audio usa la voz en inglés del propio dispositivo; se prefiere acento británico si está instalado. <b>Listen</b> se puede presionar las veces que se quiera y <b>Slow</b> lo lee más lento. En los diálogos, la segunda persona tiene otra voz o un tono distinto.</li>
+            <li>En iPad o iPhone, quite el modo silencio y suba el volumen.</li>
+            <li>Si un dispositivo no tiene voz, aparece el botón <b>Show the words</b>: usted puede leer el texto en voz alta o dejar que el alumno lo lea (se convierte en lectura).</li>
+            <li>Después de responder, el texto escuchado aparece en la retroalimentación.</li>
+          </ul>
+          <h2>Accesibilidad</h2>
+          <ul>
+            <li>Botones de 64 px o más, texto grande y alto contraste en las tarjetas de preguntas.</li>
+            <li>Teclado: 1–4 para elegir, Enter para enviar y continuar, P para pausar, L para escuchar.</li>
+            <li>Si el dispositivo pide reducir el movimiento, las animaciones se desactivan.</li>
+            <li>Las instrucciones del tutorial tienen apoyo breve en español.</li>
+          </ul>
+        </div>
+        <div class="actions"><button class="btn primary" id="guideGo" type="button">${ICON.play} Volver al juego</button></div>
+      </div>`;
+    $('#guideBack').onclick = () => show('scr-title');
+    $('#guideGo').onclick = () => show('scr-title');
+    $$('.toc a').forEach((a) => a.onclick = (e) => { e.preventDefault(); const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) t.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'start' }); });
+  }
+
+  /* ---------------- Overlay ---------------- */
+  function openOverlay(html, cls) {
+    const ov = $('#overlay');
+    ov.innerHTML = `<div class="ov-card ${cls || ''}"><div class="burst-bg"></div>${html}</div>`;
+    ov.hidden = false;
+    autoFocus(ov.querySelector('[data-focus]') || ov.querySelector('button'));
+    return ov;
+  }
+  function closeOverlay() { const ov = $('#overlay'); ov.hidden = true; ov.innerHTML = ''; }
+  function banner(o) {
+    const ov = openOverlay(`
+      <div class="ov-kicker">${esc(o.kicker || '')}</div>
+      <h2 id="ov-title" class="ov-title display outline-text">${esc(o.title)}</h2>
+      ${o.art ? `<div class="ov-art" ${o.artStyle ? `style="${o.artStyle}"` : ''}>${o.art}</div>` : ''}
+      ${o.body ? `<p class="ov-body">${o.body}</p>` : ''}
+      ${o.stats ? `<div class="ov-stats">${o.stats.map((s) => `<span>${s}</span>`).join('')}</div>` : ''}
+      <div class="ov-btns">${o.buttons.map((b, i) => `<button class="btn ${b.cls || ''}" type="button" data-b="${i}" ${i === 0 ? 'data-focus' : ''}>${b.label}</button>`).join('')}</div>`, o.cls);
+    o.buttons.forEach((b, i) => { ov.querySelector(`[data-b="${i}"]`).onclick = () => { Sfx.click(); b.fn(); }; });
+  }
+
+  /* ---------------- Game flow ---------------- */
+  function startAdventure() {
+    S.run = 'adventure'; S.score = 0; S.log = []; S.cleared = []; S.fixed = new Set(); S.bestStreak = 0;
+    startBattle(0);
+  }
+  function startSingle(li) {
+    S.run = 'single'; S.score = 0; S.log = []; S.cleared = []; S.fixed = new Set(); S.bestStreak = 0;
+    startBattle(li);
+  }
+  function makeDeck(lv) {
+    const items = QUESTIONS.filter((q) => q.lv === lv.n);
+    const pools = { r: shuffle(items.filter((q) => q.sk === 'r')), l: shuffle(items.filter((q) => q.sk === 'l')), w: shuffle(items.filter((q) => q.sk === 'w')) };
+    return { items, pools, order: [] };
+  }
+  function draw() {
+    if (S.mode === 'dojo') return S.dojo.queue.shift();
+    const d = S.deck; let sk;
+    if (S.level.boss) sk = S.level.phases[S.phase].sk;
+    else { if (!d.order.length) d.order = shuffle(['r', 'l', 'w']); sk = d.order.shift(); }
+    if (!d.pools[sk].length) {
+      const last = S.q && S.q.id;
+      d.pools[sk] = shuffle(d.items.filter((q) => q.sk === sk && q.id !== last));
+    }
+    return d.pools[sk].shift();
+  }
+
+  function startBattle(i) {
+    closeOverlay();
+    S.mode = 'battle'; S.li = i; S.level = LEVELS[i]; S.hp = S.level.hp; S.hearts = 3; S.streak = 0; S.phase = 0; S.qNum = 0;
+    S.startScore = S.score; S.deck = makeDeck(S.level); S.q = null;
+    setupArena(); show('scr-battle'); $('#qcard').innerHTML = '';
+    const lv = S.level;
+    const where = S.run === 'adventure' ? `Battle ${lv.n} of ${LEVELS.length}` : 'Single battle';
+    if (lv.boss) {
+      banner({ cls: 'ko', kicker: `Warning · Boss battle · ${where}`, title: lv.name, art: ART.ENEMY.dragon(),
+        body: `${esc(lv.intro)}<br>Energy <b>${lv.hp}</b>`,
+        stats: lv.phases.map((p, k) => `${k + 1}. ${p.name}: ${p.line.split(' ')[0]}`),
+        buttons: [{ label: `${ICON.bolt} Fight!`, cls: 'primary', fn: () => { closeOverlay(); nextQuestion(); } }] });
+    } else {
+      banner({ kicker: where, title: lv.name, art: ART.ENEMY[lv.key](),
+        body: `${esc(lv.intro)}<br>Energy <b>${lv.hp}</b> · ${esc(lv.topic)}`,
+        buttons: [{ label: `${ICON.bolt} Fight!`, cls: 'primary', fn: () => { closeOverlay(); nextQuestion(); } }] });
+    }
+  }
+
+  function startDojo() {
+    const ids = new Set(); const list = [];
+    S.log.forEach((e) => { if (!e.ok && !ids.has(e.id) && !S.fixed.has(e.id)) { ids.add(e.id); list.push(e.q); } });
+    if (!list.length) return;
+    S.mode = 'dojo'; S.dojo = { queue: shuffle(list), attempts: {}, total: list.length, fixedNow: 0 };
+    S.level = { n: 0, key: 'lantern', name: 'Training Lantern', hp: list.length * 100, scene: 'dojo' };
+    S.hp = S.level.hp; S.hearts = 3; S.streak = 0; S.qNum = 0; S.q = null;
+    setupArena(); show('scr-battle'); $('#qcard').innerHTML = '';
+    banner({ kicker: 'Training dojo', title: 'Practise your mistakes', art: ART.ENEMY.lantern(),
+      body: `${list.length} question${list.length > 1 ? 's' : ''} from your report. No hearts are lost here. If you miss a question, it comes back later.`,
+      buttons: [{ label: `${ICON.play} Start training`, cls: 'primary', fn: () => { closeOverlay(); nextQuestion(); } }] });
+  }
+
+  function setupArena() {
+    const lv = S.level; const a = $('#arena');
+    a.dataset.scene = lv.scene; a.dataset.phase = String(S.phase);
+    $('#scene').innerHTML = ART.scene(lv.scene);
+    const en = $('#enemy'); en.className = 'enemy' + (lv.key === 'dragon' ? ' dragon' : ''); en.innerHTML = ART.ENEMY[lv.key]();
+    $('#heroSprite').innerHTML = ART.hero(hero()); $('#heroSprite').className = 'hero-sprite';
+    $('#hudPortrait').innerHTML = ART.hero(hero(), { face: true });
+    $('#hudName').textContent = heroName();
+    $('#ename').textContent = lv.name;
+    if (!$('#petals').children.length && !reduced()) {
+      let p = ''; for (let i = 0; i < 12; i++) p += `<i style="left:${(i * 37) % 100}%;animation-duration:${6 + (i % 5) * 1.6}s;animation-delay:${-(i * 1.3)}s"></i>`;
+      $('#petals').innerHTML = p;
+    }
+    $('#btnPause').innerHTML = ICON.pause;
+    updateHUD();
+  }
+
+  function phaseLabel() {
+    const lv = S.level;
+    if (S.mode === 'dojo') return 'Training';
+    if (lv.boss) return `Phase ${S.phase + 1} · ${lv.phases[S.phase].name}`;
+    return S.run === 'adventure' ? `Battle ${lv.n} of ${LEVELS.length}` : 'Single battle';
+  }
+
+  function updateHUD() {
+    const lv = S.level; if (!lv) return;
+    const h = $('#hearts');
+    if (S.mode === 'dojo') { h.innerHTML = '<span class="train-tag">Training mode</span>'; h.setAttribute('aria-label', 'Training mode, no hearts lost'); }
+    else {
+      h.innerHTML = [0, 1, 2].map((i) => i < S.hearts ? ICON.heart : ICON.heartBroken.replace('class="ico"', 'class="ico lost"')).join('');
+      h.setAttribute('aria-label', `Hearts: ${S.hearts} of 3`);
+    }
+    $('#score').textContent = S.mode === 'dojo' ? '—' : S.score;
+    const frac = Math.max(0, S.hp) / lv.hp;
+    const fill = $('#hpfill'); fill.style.width = (frac * 100) + '%';
+    fill.className = 'hpfill' + (frac <= 0.25 ? ' low' : frac <= 0.5 ? ' mid' : '');
+    $('#hptext').textContent = `ENERGY ${Math.max(0, S.hp)} / ${lv.hp}`;
+    const hb = $('#hpbar'); hb.setAttribute('aria-valuemax', lv.hp); hb.setAttribute('aria-valuenow', Math.max(0, S.hp));
+    $('#ephase').textContent = phaseLabel();
+    // journey
+    const tr = $('#jtrack'); let prog = 0; let nodes = '';
+    if (S.mode === 'dojo') { prog = S.dojo.total ? (S.dojo.fixedNow / S.dojo.total) : 0; }
+    else if (S.run === 'adventure') {
+      prog = (S.li + (1 - frac)) / LEVELS.length;
+      nodes = LEVELS.map((L, i) => `<span class="jnode ${S.cleared.includes(L.n) ? 'done' : i === S.li ? 'now' : ''}" style="left:${((i + 1) / LEVELS.length) * 100}%" aria-hidden="true">${L.boss ? '★' : L.n}</span>`).join('');
+    } else { prog = 1 - frac; nodes = `<span class="jnode ${S.hp <= 0 ? 'done' : 'now'}" style="left:100%" aria-hidden="true">${lv.boss ? '★' : lv.n}</span>`; }
+    tr.innerHTML = `<div class="jfill" style="width:${Math.round(prog * 100)}%"></div>${nodes}`;
+    tr.setAttribute('aria-valuenow', Math.round(prog * 100));
+  }
+
+  /* ---------------- Questions ---------------- */
+  function nextQuestion() {
+    Speech.stop();
+    const q = draw();
+    if (!q) { if (S.mode === 'dojo') return dojoDone(); return; }
+    S.q = q; S.answered = false; S.qNum++; S.listened = false; S.built = [];
+    renderQ();
+  }
+
+  function shortOpts(list) { return list.every((o) => o.text.length <= 22); }
+
+  function renderQ() {
+    const q = S.q; const c = $('#qcard');
+    const ico = { r: ICON.book, l: ICON.ear, w: ICON.pencil }[q.sk];
+    let h = `<div class="qmeta"><span class="chip ${q.sk}">${ico} ${SKILL[q.sk]}</span><span class="chip topic">${esc(FOCUS[q.fo])}</span>${S.streak >= 2 ? `<span class="streak">${ICON.bolt} Streak ${S.streak}</span>` : ''}<span class="qcount">Q${S.qNum}</span></div>`;
+    if (q.sk === 'l') {
+      if (q.who) h += `<p class="qwho">${esc(q.who)}</p>`;
+      h += `<h2 class="qprompt" id="qprompt">${fmt(q.p)}</h2>`;
+      h += `<div class="listen-row"><button class="btn listen" type="button" id="btnListen">${ICON.play} Listen</button><button class="btn" type="button" id="btnSlow">${ICON.slow} Slow</button></div><div id="tsWrap"></div>`;
+    } else {
+      if (q.pas) h += `<div class="passage">${fmt(q.pas)}</div>`;
+      h += `<h2 class="qprompt" id="qprompt">${fmt(q.p)}</h2>`;
+    }
+    if (q.s) h += `<div class="qsentence">${fmt(q.s).replace(/_{3,}/g, '<span class="gap" aria-label="blank"></span>')}</div>`;
+
+    if (q.t === 'mc' || q.t === 'tf') {
+      if (q.t === 'tf') S.opts = [{ text: 'True', correct: q.a === true, why: q.why }, { text: 'False', correct: q.a === false, why: q.why }];
+      else S.opts = shuffle(q.o.map((o, i) => ({ text: Array.isArray(o) ? o[0] : o, why: Array.isArray(o) ? o[1] : '', correct: i === 0 })));
+      const two = q.t === 'tf' || shortOpts(S.opts);
+      h += `<div class="opts ${two ? 'two' : ''} ${q.t === 'tf' ? 'tf' : ''}" role="group" aria-labelledby="qprompt">${S.opts.map((o, i) => `<button class="opt" type="button" data-i="${i}"><span class="k">${i + 1}</span><span class="t">${esc(o.text)}</span></button>`).join('')}</div>`;
+    } else if (q.t === 'type') {
+      h += `<div class="type-row ${q.long ? '' : 'short'}"><label class="sr" for="ansIn">Your answer</label><input id="ansIn" class="ans-input" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="${q.long ? 'Write the full sentence here' : 'Type here'}"><button class="btn attack" type="button" id="btnAttack">${ICON.bolt} Attack!</button></div>`;
+    } else if (q.t === 'build') {
+      const words = q.ans.split(' '); const punct = /^[.?!]$/.test(words[words.length - 1]) ? words.pop() : '';
+      S.buildAns = words; S.buildPunct = punct;
+      S.tiles = shuffle(words.concat(q.ex || [])).map((w, i) => ({ w, i, used: false }));
+      h += `<div class="buildline" id="buildLine" aria-live="polite"></div><div class="tiles" id="tiles" role="group" aria-label="Words">${S.tiles.map((t, i) => `<button class="tile" type="button" data-t="${i}">${esc(t.w)}</button>`).join('')}</div>
+        <div class="build-actions"><button class="btn small" type="button" id="btnUndo">${ICON.back} Undo</button><button class="btn small" type="button" id="btnClear">Clear</button><button class="btn attack" type="button" id="btnBuild">${ICON.bolt} Attack!</button></div>`;
+    }
+    c.innerHTML = h;
+    $('#cardCol').scrollTop = 0;
+
+    if (q.sk === 'l') {
+      $('#btnListen').onclick = () => listen(false);
+      $('#btnSlow').onclick = () => listen(true);
+      if (!Speech.ok) showTranscriptOption(true);
+    }
+    if (q.t === 'mc' || q.t === 'tf') { $$('.opt', c).forEach((b) => b.onclick = () => chooseOpt(+b.dataset.i)); }
+    if (q.t === 'type') {
+      const inp = $('#ansIn');
+      $('#btnAttack').onclick = submitType;
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); submitType(); } });
+    }
+    if (q.t === 'build') {
+      $$('.tile', c).forEach((b) => b.onclick = () => tapTile(+b.dataset.t));
+      $('#btnUndo').onclick = undoTile; $('#btnClear').onclick = clearTiles; $('#btnBuild').onclick = submitBuild;
+      drawBuild();
+    }
+    // focus
+    const first = q.sk === 'l' ? $('#btnListen') : q.t === 'type' ? $('#ansIn') : q.t === 'build' ? $('.tile', c) : $('.opt', c);
+    autoFocus(first, q.t === 'type' && q.sk !== 'l');
+  }
+
+  function listen(slow) {
+    const q = S.q; if (!q || q.sk !== 'l') return;
+    Sfx.init();
+    const b = $(slow ? '#btnSlow' : '#btnListen');
+    const okd = Speech.speak(q.au, slow, () => { if (b) b.classList.remove('playing'); });
+    if (okd && b) b.classList.add('playing');
+    if (!S.listened) { S.listened = true; showTranscriptOption(!okd); }
+    if (!okd) showTranscriptOption(true);
+    const lb = $('#btnListen'); if (lb && !slow) lb.innerHTML = `${ICON.replay} Listen again`;
+  }
+  function transcriptHTML(q) { const a = Array.isArray(q.au) ? q.au : [q.au]; return a.map((t) => (a.length > 1 ? '— ' : '') + esc(t)).join('<br>'); }
+  function showTranscriptOption(noSound) {
+    const w = $('#tsWrap'); if (!w || S.answered || w.dataset.shown) return;
+    w.innerHTML = `${noSound ? '<p class="nosound">Sound is not working on this device. Ask your teacher to read it, or read it yourself.</p>' : ''}<button class="linkish" type="button" id="btnTs">Can't hear it? Show the words</button>`;
+    $('#btnTs').onclick = () => { w.dataset.shown = '1'; w.innerHTML = `<div class="transcript">${transcriptHTML(S.q)}</div>`; };
+  }
+
+  function chooseOpt(i) {
+    if (S.answered) return; const o = S.opts[i]; if (!o) return;
+    $$('#qcard .opt').forEach((b, j) => {
+      b.disabled = true; const oj = S.opts[j];
+      if (oj.correct) { b.classList.add('ok'); b.querySelector('.k').innerHTML = ICON.check; }
+      else if (j === i) { b.classList.add('no'); b.querySelector('.k').innerHTML = ICON.cross; }
+      else b.classList.add('dim');
+    });
+    resolve(o.correct, o.text, o.correct ? '' : o.why, S.opts.find((x) => x.correct).text);
+  }
+
+  function norm(s) {
+    s = String(s || '').toLowerCase().replace(/[’‘`´]/g, "'");
+    s = s.replace(/\b(i|you|we|they)'ve\b/g, '$1 have').replace(/\b(he|she|it)'s\b/g, '$1 has')
+      .replace(/\bhaven'?t\b/g, 'have not').replace(/\bhasn'?t\b/g, 'has not')
+      .replace(/\bive\b/g, 'i have').replace(/\b(you|we|they)ve\b/g, '$1 have');
+    return s.replace(/[^a-z0-9' ]+/g, ' ').replace(/'/g, '').replace(/\s+/g, ' ').trim();
+  }
+  function submitType() {
+    if (S.answered) return; const q = S.q; const inp = $('#ansIn'); const raw = inp.value;
+    if (!raw.trim()) { inp.focus(); inp.placeholder = 'Write your answer first'; return; }
+    const light = raw.trim().toLowerCase().replace(/[’‘`´]/g, "'").replace(/[.!?]+$/, '').trim();
+    const n = norm(raw);
+    let ok = q.acc.some((a) => norm(a) === n); let why = '';
+    if (ok && /\b(i|you|we|they|he|she|it)'(ve|s)$/.test(light) && /^yes\b/.test(light)) { ok = false; why = 'Don\'t use contractions in short yes answers: **Yes, I have.**'; }
+    if (!ok && !why && q.bad) { for (const k in q.bad) { if (k === light || norm(k) === n) { why = q.bad[k]; break; } } }
+    if (!ok && !why && q.pat) { for (const p of q.pat) { if (new RegExp(p[0]).test(n)) { why = p[1]; break; } } }
+    if (!ok && !why && q.acc.some((a) => norm(a).replace(/ /g, '') === n.replace(/ /g, ''))) why = 'Check the spaces between the words.';
+    if (!ok && !why) why = 'Compare your answer with the correct answer below, letter by letter.';
+    inp.disabled = true; inp.classList.add(ok ? 'ok' : 'no'); $('#btnAttack').disabled = true;
+    resolve(ok, raw.trim(), why, q.show || q.acc[0]);
+  }
+
+  function drawBuild() {
+    const line = $('#buildLine'); if (!line) return;
+    if (!S.built.length) line.innerHTML = '<span class="hint">Tap the words in the right order.</span>';
+    else line.innerHTML = S.built.map((ti, k) => `<button class="tile placed" type="button" data-b="${k}">${esc(S.tiles[ti].w)}</button>`).join('') + (S.buildPunct ? `<span class="punct">${S.buildPunct}</span>` : '');
+    $$('#buildLine .tile').forEach((b) => b.onclick = () => { if (S.answered) return; const k = +b.dataset.b; const ti = S.built.splice(k, 1)[0]; S.tiles[ti].used = false; syncTiles(); });
+  }
+  function syncTiles() { $$('#tiles .tile').forEach((b) => { b.classList.toggle('used', S.tiles[+b.dataset.t].used); }); drawBuild(); }
+  function tapTile(ti) { if (S.answered) return; const t = S.tiles[ti]; if (!t || t.used) return; t.used = true; S.built.push(ti); Sfx.click(); syncTiles(); }
+  function undoTile() { if (S.answered || !S.built.length) return; const ti = S.built.pop(); S.tiles[ti].used = false; syncTiles(); }
+  function clearTiles() { if (S.answered) return; S.built.forEach((ti) => { S.tiles[ti].used = false; }); S.built = []; syncTiles(); }
+  function submitBuild() {
+    if (S.answered) return; const q = S.q;
+    if (!S.built.length) { $('#buildLine').innerHTML = '<span class="hint">Tap the words first.</span>'; return; }
+    const words = S.built.map((ti) => S.tiles[ti].w); const ans = S.buildAns;
+    const ok = words.join(' ') === ans.join(' ');
+    let why = '';
+    if (!ok) {
+      const extra = words.find((w) => (q.ex || []).includes(w) && !ans.includes(w));
+      if (extra && q.exWhy && q.exWhy[extra]) why = q.exWhy[extra];
+      else if (words.length < ans.length) why = 'Some words are missing. Use all the words you need.';
+      else if (words.slice().sort().join(' ') === ans.slice().sort().join(' ')) why = 'Right words, wrong order. Remember: **Have / Has + person + ever + past participle**.';
+      else why = 'Check the words and the order.';
+    }
+    $('#buildLine').classList.add(ok ? 'ok' : 'no');
+    $$('#qcard .tile, #btnUndo, #btnClear, #btnBuild').forEach((b) => { b.disabled = true; });
+    resolve(ok, words.join(' ') + (S.buildPunct || ''), why, ans.join(' ') + (S.buildPunct || ''));
+  }
+
+  /* ---------------- Resolve answer ---------------- */
+  function resolve(ok, given, why, correct) {
+    S.answered = true; const q = S.q;
+    const entry = { id: q.id, q, ok, given, lv: S.level.n };
+    if (S.mode !== 'dojo') S.log.push(entry);
+    let head = ''; let heal = false;
+    if (ok) {
+      S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
+      const special = S.mode !== 'dojo' && S.streak >= 3;
+      const dmg = special ? 150 : 100;
+      S.hp = Math.max(0, S.hp - dmg);
+      if (S.mode !== 'dojo') S.score += 100 + (special ? 50 : 0);
+      else { S.fixed.add(q.id); S.dojo.fixedNow++; }
+      if (S.mode !== 'dojo' && S.streak % 5 === 0 && S.hearts < 3) { S.hearts++; heal = true; }
+      fxHit(dmg, special, heal);
+      head = special ? `${ICON.star} SPECIAL MOVE! −${dmg} energy` : `${ICON.check} HIT! −${dmg} energy`;
+      if (heal) head += ' · Heart +1';
+    } else {
+      S.streak = 0;
+      if (S.mode !== 'dojo') S.hearts = Math.max(0, S.hearts - 1);
+      else { S.dojo.attempts[q.id] = (S.dojo.attempts[q.id] || 0) + 1; if (S.dojo.attempts[q.id] < 3) S.dojo.queue.push(q); }
+      fxMiss();
+      head = S.mode === 'dojo' ? `${ICON.cross} Not yet! It will come back.` : `${ICON.cross} OUCH! You lost a heart.`;
+    }
+    updateHUD();
+    let nextLabel = 'Next question ▶';
+    if (S.mode === 'dojo') { if (!S.dojo.queue.length) nextLabel = 'Finish training ▶'; }
+    else if (S.hp <= 0) nextLabel = 'Victory! ▶';
+    else if (S.hearts <= 0) nextLabel = 'Continue ▶';
+    const fb = document.createElement('div');
+    fb.className = 'fb ' + (ok ? 'ok' : 'no');
+    fb.innerHTML = `<div class="fb-head">${head}</div><div class="fb-body">
+      ${!ok && why ? `<p class="fb-why">${fmt(why)}</p>` : ''}
+      ${!ok ? `<p class="fb-ans">Correct answer: <b>${esc(correct)}</b></p>` : ''}
+      ${q.sk === 'l' ? `<p class="fb-said"><strong>You heard:</strong><br>${transcriptHTML(q)}</p>` : ''}
+      <p class="fb-rule"><span class="tag">Rule</span><span>${fmt(q.rule)}</span></p>
+      <button class="btn primary" type="button" id="btnNext">${nextLabel}</button></div>`;
+    $('#qcard').appendChild(fb);
+    const tsw = $('#tsWrap'); if (tsw && !tsw.dataset.shown) tsw.innerHTML = '';
+    $('#live').textContent = plain(head.replace(/<[^>]+>/g, '')) + (ok ? '' : '. Correct answer: ' + correct);
+    const nb = $('#btnNext');
+    nb.onclick = () => { nb.disabled = true; onNext(); };
+    autoFocus(nb);
+    setTimeout(() => { fb.scrollIntoView({ behavior: reduced() ? 'auto' : 'smooth', block: 'nearest' }); }, 90);
+  }
+
+  function onNext() {
+    if (S.mode === 'dojo') { if (!S.dojo.queue.length) return dojoDone(); return nextQuestion(); }
+    if (S.hp <= 0) return battleWon();
+    if (S.hearts <= 0) return knockOut();
+    if (S.level.boss) {
+      const m = S.level.hp; const ph = S.hp > m * 2 / 3 ? 0 : S.hp > m / 3 ? 1 : 2;
+      if (ph > S.phase) { S.phase = ph; return phaseBanner(); }
+    }
+    nextQuestion();
+  }
+
+  function phaseBanner() {
+    const p = S.level.phases[S.phase];
+    const vars = S.phase === 1 ? '--d1:#7B45E8;--d1s:#4C25A6;--d1l:#B596FF;--d2:#FF6FB0;--d3:#FFE14D' : '--d1:#F2A51A;--d1s:#A86A00;--d1l:#FFE08A;--d2:#2EE6FF;--d3:#FF3355';
+    Sfx.ko();
+    banner({ cls: 'ko', kicker: 'Warning!', title: `Phase ${S.phase + 1}: ${p.name}`, art: ART.ENEMY.dragon(), artStyle: vars,
+      body: `The Encore Dragon changes form! Now: <b>${esc(p.line.toLowerCase())}</b>.`,
+      buttons: [{ label: `${ICON.bolt} Keep fighting!`, cls: 'primary', fn: () => { closeOverlay(); $('#arena').dataset.phase = String(S.phase); updateHUD(); nextQuestion(); } }] });
+  }
+
+  function battleWon() {
+    const lv = S.level; $('#enemy').classList.add('defeated'); Sfx.win();
+    if (!S.cleared.includes(lv.n)) S.cleared.push(lv.n);
+    const bonus = S.hearts * 100 + (lv.boss ? 500 : 0); S.score += bonus; updateHUD();
+    const last = S.run === 'single' || S.li >= LEVELS.length - 1;
+    const stats = [`Hearts left: ${S.hearts}`, `Bonus +${bonus}`, `Score ${S.score}`];
+    setTimeout(() => banner({ cls: 'win', kicker: lv.boss ? 'Boss defeated!' : 'Stage clear!', title: `${lv.name} defeated!`,
+      art: ART.hero(hero()), body: last ? (lv.boss && S.run === 'adventure' ? `Amazing, ${esc(heroName())}! You saved the show!` : `Well done, ${esc(heroName())}!`) : `Next enemy: <b>${esc(LEVELS[S.li + 1].name)}</b> · Energy ${LEVELS[S.li + 1].hp}`,
+      stats,
+      buttons: last ? [{ label: 'See my Battle Report', cls: 'primary', fn: showReport }]
+        : [{ label: 'Next battle ▶', cls: 'primary', fn: () => startBattle(S.li + 1) }, { label: 'See my report so far', fn: showReport }] }), reduced() ? 50 : 750);
+  }
+
+  function knockOut() {
+    Sfx.ko();
+    banner({ cls: 'ko', kicker: 'K.O.', title: "Don't give up!", art: ART.ENEMY[S.level.key](),
+      body: 'You lost all your hearts. Try this battle again. The questions will be different!',
+      buttons: [{ label: `${ICON.replay} Try again`, cls: 'primary', fn: () => { S.score = S.startScore; startBattle(S.li); } },
+        { label: 'See my Battle Report', fn: showReport }] });
+  }
+
+  function dojoDone() {
+    Sfx.win(); $('#enemy').classList.add('defeated');
+    const d = S.dojo;
+    banner({ cls: 'win', kicker: 'Training complete', title: d.fixedNow === d.total ? 'All fixed!' : 'Good training!', art: ART.hero(hero()),
+      body: `You fixed <b>${d.fixedNow}</b> of <b>${d.total}</b> mistake${d.total > 1 ? 's' : ''}.`,
+      buttons: [{ label: 'Back to my report', cls: 'primary', fn: showReport },
+        { label: `${ICON.replay} Play the adventure again`, fn: () => { S.pending = { run: 'adventure' }; startAdventure(); } },
+        { label: 'Title screen', fn: () => { closeOverlay(); renderTitle(); show('scr-title'); } }] });
+  }
+
+  /* ---------------- FX ---------------- */
+  function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+  function fxHit(dmg, special, heal) {
+    const fx = $('#fx'); const h = hero();
+    restart($('#heroSprite'), 'lunge');
+    setTimeout(() => restart($('#enemy'), 'hit'), reduced() ? 0 : 300);
+    const b = document.createElement('div'); b.className = 'blast' + (special ? ' special' : ''); b.style.setProperty('--c', h.fx); fx.appendChild(b);
+    const d = document.createElement('div'); d.className = 'dmg'; d.textContent = '−' + dmg; d.style.animationDelay = '.28s'; fx.appendChild(d);
+    const p = document.createElement('div');
+    p.className = 'pow' + (special ? ' special' : '');
+    p.textContent = special ? 'SPECIAL MOVE!' : ['POW!', 'BAM!', 'HIT!', 'SMASH!', 'ZAP!'][Math.floor(Math.random() * 5)];
+    if (special) { const s = document.createElement('div'); s.className = 'speedlines'; fx.appendChild(s); setTimeout(() => s.remove(), 700); }
+    setTimeout(() => fx.appendChild(p), 250);
+    setTimeout(() => { b.remove(); d.remove(); p.remove(); }, 1400);
+    special ? Sfx.special() : Sfx.hit();
+    if (heal) {
+      setTimeout(() => { const hp = document.createElement('div'); hp.className = 'pow heal'; hp.textContent = 'HEART +1'; fx.appendChild(hp); Sfx.heal(); setTimeout(() => hp.remove(), 1000);
+        const hs = $$('#hearts .ico'); if (hs[S.hearts - 1]) restart(hs[S.hearts - 1], 'pop'); }, 1100);
+    }
+  }
+  function fxMiss() {
+    restart($('#enemy'), 'attack');
+    setTimeout(() => { restart($('#heroSprite'), 'hurt'); restart($('#arena'), 'hurt'); const hs = $$('#hearts .ico'); if (hs[S.hearts]) restart(hs[S.hearts], 'pop'); }, reduced() ? 0 : 220);
+    Sfx.miss();
+  }
+
+  /* ---------------- Pause ---------------- */
+  function openPause() {
+    if ($('#scr-battle').hidden) return;
+    Speech.stop(); S.quitArm = false;
+    const ov = openOverlay(`
+      <div class="ov-kicker">${esc(phaseLabel())}</div>
+      <h2 id="ov-title" class="ov-title display outline-text">Paused</h2>
+      <div class="pause-grid">
+        <button class="btn primary" type="button" id="pResume" data-focus>${ICON.play} Resume</button>
+        <button class="btn" type="button" id="pRestart">${ICON.replay} Restart this battle</button>
+        <button class="btn" type="button" id="pHow">How to play</button>
+        <button class="btn" type="button" id="pSound">${Sfx.on ? ICON.soundOn + ' Sound effects: on' : ICON.soundOff + ' Sound effects: off'}</button>
+        ${S.mode === 'dojo' ? '' : `<button class="btn" type="button" id="pReport">End and see my report</button>`}
+        <button class="btn ghost" type="button" id="pQuit">Quit to title screen</button>
+      </div>`);
+    $('#pResume', ov).onclick = closeOverlay;
+    $('#pRestart', ov).onclick = () => { if (S.mode === 'dojo') { closeOverlay(); startDojo(); } else { S.score = S.startScore; startBattle(S.li); } };
+    $('#pHow', ov).onclick = () => { closeOverlay(); S.returnTo = 'scr-battle'; renderHowto(); show('scr-howto'); };
+    $('#pSound', ov).onclick = () => { toggleSound(); $('#pSound').innerHTML = Sfx.on ? ICON.soundOn + ' Sound effects: on' : ICON.soundOff + ' Sound effects: off'; };
+    if ($('#pReport', ov)) $('#pReport', ov).onclick = showReport;
+    $('#pQuit', ov).onclick = () => {
+      if (!S.quitArm) { S.quitArm = true; $('#pQuit').textContent = 'Tap again to quit (progress is lost)'; return; }
+      closeOverlay(); renderTitle(); show('scr-title');
+    };
+  }
+
+  /* ---------------- Report ---------------- */
+  function pct(c, t) { return t ? Math.round((c / t) * 100) : 0; }
+  function barRow(label, c, t) {
+    if (!t) return `<div class="bar-row none"><span>${esc(label)}</span><div class="bar"><i style="width:0"></i></div><b>—</b></div>`;
+    const p = pct(c, t);
+    return `<div class="bar-row"><span>${esc(label)}</span><div class="bar" role="img" aria-label="${esc(label)}: ${c} of ${t} correct"><i class="${p < 50 ? 'low' : p < 75 ? 'mid' : ''}" style="width:${p}%"></i></div><b>${p}%</b></div>`;
+  }
+  function questionSummary(q) {
+    if (q.sk === 'l') return `${plain(q.p)} <span class="rule">(Audio: “${esc(Array.isArray(q.au) ? q.au.join(' / ') : q.au)}”)</span>`;
+    let s = esc(plain(q.p));
+    if (q.s) s += ` <span class="rule">${esc(plain(q.s).replace(/\n/g, ' '))}</span>`;
+    else if (q.pas && q.pas.length < 90) s += ` <span class="rule">${esc(plain(q.pas).replace(/\n/g, ' '))}</span>`;
+    return s;
+  }
+  function correctOf(q) {
+    if (q.t === 'mc') return q.o[0];
+    if (q.t === 'tf') return q.a ? 'True' : 'False';
+    if (q.t === 'type') return q.show || q.acc[0];
+    return q.ans.replace(/ ([.?!])$/, '$1');
+  }
+  function showReport() {
+    closeOverlay(); Speech.stop();
+    const log = S.log; const total = log.length; const right = log.filter((e) => e.ok).length; const acc = pct(right, total);
+    const by = (key, val) => { const l = log.filter((e) => e.q[key] === val); return [l.filter((e) => e.ok).length, l.length]; };
+    const battles = S.run === 'adventure' ? LEVELS.length : 1;
+    const ranks = acc >= 90 ? ['S', 'Legend'] : acc >= 75 ? ['A', 'Hero'] : acc >= 60 ? ['B', 'Rising star'] : ['C', 'Rookie'];
+    const best = store.get('best', 0); if (S.score > best) store.set('best', S.score);
+    // mistakes
+    const miss = new Map();
+    log.forEach((e) => { if (!e.ok) miss.set(e.id, e); });
+    const missList = [...miss.values()];
+    const toPractise = missList.filter((e) => !S.fixed.has(e.id)).length;
+    const missHTML = missList.length ? `<ul class="miss-list">${missList.map((e) => `<li class="miss">
+        <div class="mtop"><span class="chip ${e.q.sk}">${SKILL[e.q.sk]}</span><span class="chip topic">${esc(FOCUS[e.q.fo])}</span>${S.fixed.has(e.id) ? `<span class="chip fixed">${ICON.check} Fixed in training</span>` : ''}</div>
+        <div class="q">${questionSummary(e.q)}</div>
+        <div class="you">You answered: ${esc(e.given)}</div>
+        <div class="right">Correct: ${esc(correctOf(e.q))}</div>
+        <div class="rule">${fmt(e.q.rule)}</div></li>`).join('')}</ul>`
+      : `<p class="empty-good">${total ? 'No mistakes. Perfect battle!' : 'No answers yet. Play a battle to see your report.'}</p>`;
+    $('#scr-report').innerHTML = `
+      <div class="page">
+        <div class="report-head">
+          <div class="portrait">${ART.hero(hero(), { face: true })}</div>
+          <div><div class="eyebrow">Battle Report · ${S.run === 'adventure' ? 'Adventure' : 'Single battle'}</div><h1 id="report-h" class="display">${esc(heroName())}</h1><p>${esc(hero().name)} · ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
+          <div class="rank" role="img" aria-label="Rank ${ranks[0]}, ${ranks[1]}"><div><b>${total ? ranks[0] : '?'}</b><small>${total ? ranks[1] : 'Play!'}</small></div></div>
+        </div>
+        <div class="stats">
+          <div class="stat"><small>Score</small><b>${S.score}</b></div>
+          <div class="stat"><small>Correct</small><b>${right}/${total}</b></div>
+          <div class="stat"><small>Enemies defeated</small><b>${S.cleared.length}/${battles}</b></div>
+          <div class="stat"><small>Best streak</small><b>${S.bestStreak}</b></div>
+        </div>
+        <div class="bars-grid">
+          <div class="panel"><h2>Skills</h2>${barRow('Reading', ...by('sk', 'r'))}${barRow('Listening', ...by('sk', 'l'))}${barRow('Writing', ...by('sk', 'w'))}</div>
+          <div class="panel"><h2>Topics</h2>${Object.keys(FOCUS).map((k) => barRow(FOCUS[k], ...by('fo', k))).join('')}</div>
+        </div>
+        <div class="panel"><h2>Mistakes to review (${missList.length})</h2><p>Read each rule. Then train only these questions.</p>${missHTML}</div>
+        <div class="actions">
+          <button class="btn primary" type="button" id="rDojo" data-focus ${toPractise ? '' : 'disabled'}>${ICON.bolt} Practise my mistakes only${toPractise ? ` (${toPractise})` : ''}</button>
+          <button class="btn" type="button" id="rAgain">${ICON.replay} Play again</button>
+          <button class="btn ghost" type="button" id="rTitle">Title screen</button>
+        </div>
+        <p class="best" style="text-align:center">Tip: take a photo of this report and show it to your teacher.</p>
+      </div>`;
+    show('scr-report');
+    $('#rDojo').onclick = startDojo;
+    $('#rAgain').onclick = () => { if (S.run === 'single') startSingle(S.li); else startAdventure(); };
+    $('#rTitle').onclick = () => { renderTitle(); show('scr-title'); };
+  }
+
+  /* ---------------- Keyboard ---------------- */
+  const typing = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+  document.addEventListener('keydown', (e) => {
+    const ovOpen = !$('#overlay').hidden;
+    const inBattle = !$('#scr-battle').hidden;
+    if (e.key === 'Escape' || ((e.key === 'p' || e.key === 'P') && !typing(e))) {
+      if (!inBattle) return;
+      if (ovOpen && $('#pResume')) { e.preventDefault(); closeOverlay(); return; }
+      if (!ovOpen) { e.preventDefault(); openPause(); return; }
+    }
+    if (ovOpen || !inBattle || !S.q) return;
+    if (S.answered) { if (e.key === 'Enter') { e.preventDefault(); const nb = $('#btnNext'); if (nb && !nb.disabled) nb.click(); } return; }
+    if (typing(e)) return;
+    const q = S.q; const k = parseInt(e.key, 10);
+    if ((e.key === 'l' || e.key === 'L') && q.sk === 'l') { e.preventDefault(); listen(false); return; }
+    if (q.t === 'mc' || q.t === 'tf') {
+      if (k >= 1 && k <= S.opts.length) { e.preventDefault(); chooseOpt(k - 1); }
+      else if (q.t === 'tf' && (e.key === 't' || e.key === 'T')) chooseOpt(0);
+      else if (q.t === 'tf' && (e.key === 'f' || e.key === 'F')) chooseOpt(1);
+    } else if (q.t === 'build') {
+      if (k >= 1 && k <= 9) { const avail = S.tiles.map((t, i) => i).filter((i) => !S.tiles[i].used); if (avail[k - 1] != null) { e.preventDefault(); tapTile(avail[k - 1]); } }
+      else if (e.key === 'Backspace') { e.preventDefault(); undoTile(); }
+      else if (e.key === 'Enter' && document.activeElement && !document.activeElement.classList.contains('tile') && document.activeElement.tagName !== 'BUTTON') { e.preventDefault(); submitBuild(); }
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) Speech.stop(); });
+  /* ---------------- Init ---------------- */
+  $('#btnPause').onclick = openPause;
+  renderTitle(); renderGuide();
+  show('scr-title');
+})();
+
+</script>
+
+</body>
+</html>
